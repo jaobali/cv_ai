@@ -4,26 +4,30 @@ import secrets
 import psycopg2
 from dotenv import load_dotenv
 import os
+import streamlit as st
 
-# Carregar variáveis de ambiente do .env
-load_dotenv()
-
-# Pegar as informações do .env
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-DB_NAME = os.getenv('DB_NAME')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
 
 def get_connection():
-    """Retorna uma conexão com o banco de dados Supabase (PostgreSQL)"""
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
+    # Primeiro tenta carregar do Streamlit Cloud
+    if "DB_HOST" in st.secrets:
+        return psycopg2.connect(
+            host=st.secrets["DB_HOST"],
+            port=st.secrets["DB_PORT"],
+            dbname=st.secrets["DB_NAME"],
+            user=st.secrets["DB_USER"],
+            password=st.secrets["DB_PASSWORD"]
+        )
+    else:
+        # Se estiver rodando localmente, carrega do .env
+        from dotenv import load_dotenv
+        load_dotenv()
+        return psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD")
+        )
 
 def criar_tabelas():
     """Cria as tabelas necessárias no banco de dados Supabase/PostgreSQL"""
