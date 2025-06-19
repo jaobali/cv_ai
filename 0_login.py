@@ -17,8 +17,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-st.write(st.secrets)
-
 st.markdown("""
 <style>
     [data-testid="stSidebarNav"] {
