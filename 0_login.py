@@ -8,12 +8,6 @@ import json
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 
-import psycopg2
-from dotenv import load_dotenv
-import os
-
-
-
 
 # Configuração da página
 st.set_page_config(
@@ -22,6 +16,8 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+st.write(st.secrets)
 
 st.markdown("""
 <style>
