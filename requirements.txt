@@ -10,3 +10,4 @@ pydantic
 python-dotenv
 Pillow
 psycopg2-binary
+langchain_community
