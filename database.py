@@ -13,7 +13,7 @@ def get_connection():
         if st.secrets.get("DB_HOST"):
             return psycopg2.connect(
                 host=st.secrets["DB_HOST"],
-                port=st.secrets["DB_PORT"],
+                port=int(st.secrets["DB_PORT"]),
                 dbname=st.secrets["DB_NAME"],
                 user=st.secrets["DB_USER"],
                 password=st.secrets["DB_PASSWORD"],
@@ -27,7 +27,7 @@ def get_connection():
     load_dotenv()
     return psycopg2.connect(
         host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
+        port=int(os.getenv("DB_PORT")),
         dbname=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
