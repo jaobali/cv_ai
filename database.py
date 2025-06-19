@@ -8,27 +8,31 @@ import streamlit as st
 
 
 def get_connection():
-    if "DB_HOST" in st.secrets:
-        # Ambiente Streamlit Cloud
-        return psycopg2.connect(
-            host=st.secrets["DB_HOST"],
-            port=st.secrets["DB_PORT"],
-            dbname=st.secrets["DB_NAME"],
-            user=st.secrets["DB_USER"],
-            password=st.secrets["DB_PASSWORD"],
-            sslmode='require'
-        )
-    else:
-        # Ambiente local
-        load_dotenv()
-        return psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            port=os.getenv("DB_PORT"),
-            dbname=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            sslmode='require'
-        )
+    try:
+        # Se st.secrets existir e tiver DB_HOST → Streamlit Cloud
+        if st.secrets.get("DB_HOST"):
+            return psycopg2.connect(
+                host=st.secrets["DB_HOST"],
+                port=st.secrets["DB_PORT"],
+                dbname=st.secrets["DB_NAME"],
+                user=st.secrets["DB_USER"],
+                password=st.secrets["DB_PASSWORD"],
+                sslmode='require'
+            )
+    except Exception:
+        # Se der qualquer erro ao acessar st.secrets → Continua e tenta .env
+        pass
+
+    # Ambiente local
+    load_dotenv()
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        sslmode='require'
+    )
 
 def criar_tabelas():
     """Cria as tabelas necessárias no banco de dados Supabase/PostgreSQL"""
