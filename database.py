@@ -8,8 +8,8 @@ import streamlit as st
 
 
 def get_connection():
-    # Primeiro tenta carregar do Streamlit Cloud
     if "DB_HOST" in st.secrets:
+        # Ambiente Streamlit Cloud
         return psycopg2.connect(
             host=st.secrets["DB_HOST"],
             port=st.secrets["DB_PORT"],
@@ -19,8 +19,7 @@ def get_connection():
             sslmode='require'
         )
     else:
-        # Se estiver rodando localmente, carrega do .env
-        from dotenv import load_dotenv
+        # Ambiente local
         load_dotenv()
         return psycopg2.connect(
             host=os.getenv("DB_HOST"),
