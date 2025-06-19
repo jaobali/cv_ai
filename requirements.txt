@@ -1,0 +1,9 @@
+docling
+pydantic
+tinydb
+streamlit
+streamlit-aggrid
+pandas
+langchain_groq
+dotenv
+langchain
