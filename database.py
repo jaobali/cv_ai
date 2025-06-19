@@ -15,7 +15,8 @@ def get_connection():
             port=st.secrets["DB_PORT"],
             dbname=st.secrets["DB_NAME"],
             user=st.secrets["DB_USER"],
-            password=st.secrets["DB_PASSWORD"]
+            password=st.secrets["DB_PASSWORD"],
+            sslmode='require'
         )
     else:
         # Se estiver rodando localmente, carrega do .env
@@ -26,7 +27,8 @@ def get_connection():
             port=os.getenv("DB_PORT"),
             dbname=os.getenv("DB_NAME"),
             user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD")
+            password=os.getenv("DB_PASSWORD"),
+            sslmode='require'
         )
 
 def criar_tabelas():
