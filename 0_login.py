@@ -10,19 +10,10 @@ import extra_streamlit_components as stx
 
 import psycopg2
 
-try:
-    conn = psycopg2.connect(
-        host=st.secrets["DB_HOST"],
-        port=st.secrets["DB_PORT"],
-        dbname=st.secrets["DB_NAME"],
-        user=st.secrets["DB_USER"],
-        password=st.secrets["DB_PASSWORD"],
-        sslmode='require'
-    )
-    st.write("Conexão bem-sucedida!")
-    conn.close()
-except Exception as e:
-    st.write(f"Erro ao conectar: {e}")
+import socket
+
+ipv4_addr = socket.gethostbyname('db.vqsawcjbsiomfqjhjzyv.supabase.co')
+st.write(ipv4_addr)  # Ex: 35.209.45.67
 
 # Configuração da página
 st.set_page_config(
