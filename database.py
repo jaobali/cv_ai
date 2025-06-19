@@ -557,4 +557,5 @@ def atualizar_custo_score(id_curriculo, custo_chamada):
     cursor.close()
     conn.close()
 
-criar_tabelas()
+if __name__ == "__main__":
+    criar_tabelas()
