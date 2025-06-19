@@ -8,12 +8,11 @@ import json
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 
-import psycopg2
-
 import socket
-
-ipv4_addr = socket.gethostbyname('db.vqsawcjbsiomfqjhjzyv.supabase.co')
-st.write(ipv4_addr)  # Ex: 35.209.45.67
+try:
+    st.write(socket.gethostbyname('db.vqsawcjbsiomfqjhjzyv.supabase.co'))
+except Exception as e:
+    st.write(f"Erro de DNS: {e}")
 
 # Configuração da página
 st.set_page_config(
