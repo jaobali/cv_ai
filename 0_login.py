@@ -95,7 +95,7 @@ if not st.session_state['authentication_status']:
         st.session_state['role'] = cookie_data['role']
         st.session_state['user_id'] = cookie_data['user_id']
 
-# st.write(st.secrets["DB_HOST"])
+st.write(st.secrets["DB_HOST"])
 
 if st.session_state['authentication_status']:
     st.title(f"Bem-vindo, {st.session_state['username']}!")
