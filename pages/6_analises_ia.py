@@ -140,7 +140,7 @@ if botao_processar:
             total = len(curriculos)
 
             # 2. Opinião com LLM (apenas para quem atingiu score de corte)
-            for i, curriculo in enumerate(curriculos):
+            for i, (_, curriculo) in enumerate(curriculos.iterrows()):
                 nome_candidato = curriculo['nome_candidato']
                 status_text.text(f"Gerando análise crítica {i+1}/{total}: {nome_candidato}")
                 progress_bar.progress((i + 1) / total)
