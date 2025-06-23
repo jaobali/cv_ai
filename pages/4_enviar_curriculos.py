@@ -221,6 +221,11 @@ else:
                 status_text.text("👤 Extraindo nomes dos candidatos...")
                 curriculos_cadastrados = listar_curriculos_por_usuario(st.session_state.get('user_id'))
 
+                # Se houver ids de últimos upados na sessão, filtra só eles
+                ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
+                if ids_ultimos:
+                    curriculos_cadastrados = [c for c in curriculos_cadastrados if c['id_curriculo'] in ids_ultimos]
+
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[
                     (df_curriculos_cadastrados['status_md'] == True) &
