@@ -220,21 +220,21 @@ else:
                 # Etapa 4: Extraindo nomes
                 status_text.text("👤 Extraindo nomes dos candidatos...")
                 curriculos_cadastrados = listar_curriculos_por_usuario(st.session_state.get('user_id'))
-                ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
-                if ids_ultimos:
-                    df_curriculos_cadastrados = [c for c in curriculos_cadastrados if c['id_curriculo'] in ids_ultimos]
 
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[
                     (df_curriculos_cadastrados['status_md'] == True) &
                     (df_curriculos_cadastrados['status_resumo_llm'] == True)
                 ]
-                arquivos_para_nome_candidato = df_curriculos_cadastrados[['id_curriculo','resumo_llm']].sort_values('id_curriculo').tail(len(caminhos_arquivos))
+                arquivos_para_nome_candidato = df_curriculos_cadastrados[['id_curriculo','resumo_llm']]
 
                 total_nomes = len(arquivos_para_nome_candidato)
                 for i, (index, row) in enumerate(arquivos_para_nome_candidato.iterrows()):
                     resumo_json = json.loads(json.loads(row['resumo_llm']))
                     nome_candidato = resumo_json['nome_completo']
+                    if isinstance(nome_candidato, list):
+                        nome_candidato = nome_candidato[0]
+                        print(nome_candidato)
                     atualizar_nome_candidato(row['id_curriculo'], nome_candidato)
 
                     # Atualiza progresso da etapa de nomes
