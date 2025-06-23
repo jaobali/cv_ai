@@ -131,7 +131,9 @@ if botao_processar:
             curriculos = pd.DataFrame(curriculos)
             curriculos = curriculos.loc[
                     (curriculos['status_md'] == True) &
-                    (curriculos['status_resumo_llm'] == True)
+                    (curriculos['status_resumo_llm'] == True) &
+                    (curriculos['status_score_llm'] == True) &
+                    (curriculos['status_opiniao_llm'] == False)
                 ]
 
             ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
