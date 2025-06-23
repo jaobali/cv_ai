@@ -100,7 +100,7 @@ if botao_processar:
             # 1. Score com LLM
             ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
             if ids_ultimos:
-                    curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
+                curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
 
             for i, curriculo in enumerate(curriculos):
                 nome_candidato = curriculo.get('nome_candidato', f'Currículo {curriculo["id_curriculo"]}')
@@ -126,19 +126,25 @@ if botao_processar:
 
             # Atualiza curriculos após score
             curriculos = listar_curriculos_por_usuario(st.session_state.get('user_id'))
-            total = len(curriculos)
+
+            curriculos = pd.DataFrame(curriculos)
+            curriculos = curriculos.loc[
+                    (curriculos['status_md'] == True) &
+                    (curriculos['status_resumo_llm'] == True)
+                ]
 
             ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
             if ids_ultimos:
-                    curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
+                curriculos = curriculos[curriculos['id_curriculo'].isin(ids_ultimos)]
+            total = len(curriculos)
 
             # 2. Opinião com LLM (apenas para quem atingiu score de corte)
             for i, curriculo in enumerate(curriculos):
-                nome_candidato = curriculo.get('nome_candidato', f'Currículo {curriculo["id_curriculo"]}')
+                nome_candidato = curriculo['nome_candidato']
                 status_text.text(f"Gerando análise crítica {i+1}/{total}: {nome_candidato}")
                 progress_bar.progress((i + 1) / total)
                 try:
-                    score = curriculo.get('score_llm')
+                    score = curriculo['score_llm']
                     if score is not None and float(score) > float(score_de_corte):
                         if curriculo['status_opiniao_llm'] == False and curriculo['resumo_llm']:
                             desc_vaga = f'''
