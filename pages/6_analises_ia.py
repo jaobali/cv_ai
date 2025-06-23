@@ -95,7 +95,7 @@ if botao_processar:
 
         ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
         if ids_ultimos:
-                curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
+            curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
 
         total = len(curriculos)
 
