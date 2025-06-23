@@ -22,7 +22,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 st.set_page_config(
     page_title="Análises com IA",
-    page_icon="🤖",
+    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -46,7 +46,7 @@ with st.sidebar:
     st.page_link("pages/3_gerenciar_vagas.py", label="✂️ Gerenciar Vagas", use_container_width=True)
     st.page_link("pages/4_enviar_curriculos.py", label="📤 Enviar Currículo", use_container_width=True)
     st.page_link("pages/5_gerenciar_curriculos.py", label="✂️ Gerenciar Currículos", use_container_width=True)
-    st.page_link("pages/6_analises_ia.py", label="🤖 Análises com IA", use_container_width=True)
+    st.page_link("pages/6_analises_ia.py", label="🧠 Análises com IA", use_container_width=True)
     st.markdown("---")
     if st.session_state.get('authentication_status'):
         if st.button("🚪 Sair", use_container_width=True):
@@ -66,7 +66,7 @@ if not st.session_state.get('authentication_status'):
 col1, col2, col3 = st.columns([60, 20, 20], vertical_alignment="center")
 
 with col1:
-    st.title("🤖 Análises com IA de Currículos")
+    st.title("🧠 Análises com IA de Currículos")
 
 with col2:
     score_de_corte = st.number_input(

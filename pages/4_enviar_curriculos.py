@@ -67,7 +67,7 @@ with st.sidebar:
     st.page_link("pages/3_gerenciar_vagas.py", label="✂️ Gerenciar Vagas", use_container_width=True)
     st.page_link("pages/4_enviar_curriculos.py", label="📤 Enviar Currículo", use_container_width=True)
     st.page_link("pages/5_gerenciar_curriculos.py", label="✂️ Gerenciar Currículos", use_container_width=True)
-    st.page_link("pages/6_analises_ia.py", label="🤖 Análises com IA", use_container_width=True)
+    st.page_link("pages/6_analises_ia.py", label="🧠 Análises com IA", use_container_width=True)
     st.markdown("---")
     if st.session_state.get('authentication_status'):
         if st.button("🚪 Sair", use_container_width=True):
@@ -188,7 +188,7 @@ else:
                     st.warning(f"Não foi possível remover a pasta temporária: {str(e)}")
 
                 # Etapa 3: Gerando Resumo
-                status_text.text("🤖 Gerando resumos dos currículos...")
+                status_text.text("🧠 Gerando resumos dos currículos...")
                 curriculos_cadastrados = listar_curriculos_por_usuario(st.session_state.get('user_id'))
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[df_curriculos_cadastrados['status_resumo_llm'] == False]

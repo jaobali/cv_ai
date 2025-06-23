@@ -48,7 +48,7 @@ def gerar_resumo_curriculo(texto_markdown):
         Seu objetivo é extrair as informações do curriculo e retornar um resumo do mesmo em formato JSON.
         Lembre-se de que esses curriculos estão em formato markdown e foram extraídos de arquivos pdf por um certo processo de extração de texto.
         Portanto, as vezes, as informações não estarão perfeitamente em seu capítulos correspondentes. Assim, analise as informação como um todo.
-        Se você não encontrar alguma informação pedida no corriculo coloque ["Não encontrado"] no campo correspondente explicitamente neste formato de lista mencionado.
+        Se você não encontrar alguma informação pedida no corriculo coloque ["Não encontrado"] no campo correspondente neste formato de lista mencionado.
         Necessariamente preciso que o output seja em formato JSON para análises posteriores.
         Ignore strings no formato "<!-- image -->", elas representam posições onde imagens foram detectadas no curriculo.
         Não escreva nada além do formato JSON solicitado.
