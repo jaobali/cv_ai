@@ -98,6 +98,10 @@ if botao_processar:
             st.info("ℹ️ Nenhum currículo encontrado para processamento")
         else:
             # 1. Score com LLM
+            ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
+            if ids_ultimos:
+                    curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
+
             for i, curriculo in enumerate(curriculos):
                 nome_candidato = curriculo.get('nome_candidato', f'Currículo {curriculo["id_curriculo"]}')
                 status_text.text(f"Gerando score do candidato {i+1}/{total}: {nome_candidato}")
@@ -123,6 +127,10 @@ if botao_processar:
             # Atualiza curriculos após score
             curriculos = listar_curriculos_por_usuario(st.session_state.get('user_id'))
             total = len(curriculos)
+
+            ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
+            if ids_ultimos:
+                    curriculos = [c for c in curriculos if c['id_curriculo'] in ids_ultimos]
 
             # 2. Opinião com LLM (apenas para quem atingiu score de corte)
             for i, curriculo in enumerate(curriculos):

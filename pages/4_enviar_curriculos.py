@@ -163,7 +163,10 @@ else:
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[df_curriculos_cadastrados['status_md'] == False]
 
                 # Processa apenas os currículos que acabaram de ser inseridos
-                curriculos_para_processar = df_curriculos_cadastrados.tail(len(caminhos_arquivos))
+                curriculos_para_processar = df_curriculos_cadastrados.sort_values('id_curriculo').tail(len(caminhos_arquivos))
+
+                ids_ultimos_upados = curriculos_para_processar['id_curriculo'].tolist()
+                st.session_state['ultimos_curriculos_upados'] = ids_ultimos_upados
 
                 total_md = len(curriculos_para_processar)
                 for i, (index, row) in enumerate(curriculos_para_processar.iterrows()):
@@ -190,6 +193,12 @@ else:
                 # Etapa 3: Gerando Resumo
                 status_text.text("🧠 Gerando resumos dos currículos...")
                 curriculos_cadastrados = listar_curriculos_por_usuario(st.session_state.get('user_id'))
+
+                # Se houver ids de últimos upados na sessão, filtra só eles
+                ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
+                if ids_ultimos:
+                    curriculos_cadastrados = [c for c in curriculos_cadastrados if c['id_curriculo'] in ids_ultimos]
+
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[df_curriculos_cadastrados['status_resumo_llm'] == False]
                 arquivos_para_resumo = df_curriculos_cadastrados[['id_curriculo','md']]
@@ -211,12 +220,16 @@ else:
                 # Etapa 4: Extraindo nomes
                 status_text.text("👤 Extraindo nomes dos candidatos...")
                 curriculos_cadastrados = listar_curriculos_por_usuario(st.session_state.get('user_id'))
+                ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
+                if ids_ultimos:
+                    df_curriculos_cadastrados = [c for c in curriculos_cadastrados if c['id_curriculo'] in ids_ultimos]
+
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[
                     (df_curriculos_cadastrados['status_md'] == True) &
                     (df_curriculos_cadastrados['status_resumo_llm'] == True)
                 ]
-                arquivos_para_nome_candidato = df_curriculos_cadastrados[['id_curriculo','resumo_llm']]
+                arquivos_para_nome_candidato = df_curriculos_cadastrados[['id_curriculo','resumo_llm']].sort_values('id_curriculo').tail(len(caminhos_arquivos))
 
                 total_nomes = len(arquivos_para_nome_candidato)
                 for i, (index, row) in enumerate(arquivos_para_nome_candidato.iterrows()):
