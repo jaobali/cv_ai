@@ -2,7 +2,7 @@ from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 import time
 
-from langchain.callbacks import get_openai_callback
+from langchain_community.callbacks.manager import get_openai_callback
 
 from dotenv import load_dotenv, find_dotenv
 from pydantic import BaseModel, Field
