@@ -13,7 +13,7 @@ from database import (
     atualizar_custo_resumo
 )
 from datetime import datetime
-from docling.document_converter import DocumentConverter
+# from docling.document_converter import DocumentConverter
 from pathlib import Path
 import pandas as pd
 from analises_llm import gerar_resumo_curriculo
@@ -21,6 +21,25 @@ import json
 import time
 import os
 import shutil
+
+from pathlib import Path
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.document_converter import DocumentConverter, PdfFormatOption
+
+artifacts_dir = Path(__file__).parent.parent / "docling_models"
+
+pipeline_options = PdfPipelineOptions(
+    artifacts_path=str(artifacts_dir),
+    # Se quiser OCR:
+    # ocr_options=EasyOcrOptions(download_enabled=False)
+)
+
+converter = DocumentConverter(
+    format_options={
+        InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+    }
+)
 
 
 # Configuração da página
