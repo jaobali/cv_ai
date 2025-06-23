@@ -117,10 +117,10 @@ if botao_processar:
                         score, tempo_score, input_tokens, output_tokens, model_name, custo_chamada = analises_llm.gerar_score_curriculo(curriculo['resumo_llm'], desc_vaga)
                         if score is not None:
                             atualizar_score_curriculo(curriculo['id_curriculo'], score)
-                            atualizar_tempo_execucao_score(curriculo['id_curriculo'], tempo_score)
-                            atualizar_tokens_score(curriculo['id_curriculo'], input_tokens, output_tokens)
+                            atualizar_tempo_execucao_score(curriculo['id_curriculo'], tempo_score if tempo_score is not None else 0)
+                            atualizar_tokens_score(curriculo['id_curriculo'], input_tokens if input_tokens is not None else 0,  output_tokens if output_tokens is not None else 0)
                             atualizar_llm_model(curriculo['id_curriculo'], model_name)
-                            atualizar_custo_score(curriculo['id_curriculo'], custo_chamada)
+                            atualizar_custo_score(curriculo['id_curriculo'], custo_chamada if custo_chamada is not None else 0)
                 except Exception as e:
                     st.error(f"Erro no currículo {curriculo['id_curriculo']}: {str(e)}")
                     continue
@@ -156,10 +156,10 @@ if botao_processar:
                             opiniao, tempo_opiniao, input_tokens, output_tokens, model_name, custo_chamada = analises_llm.gerar_opiniao_curriculo(curriculo['resumo_llm'], desc_vaga)
                             if opiniao:
                                 atualizar_opiniao_curriculo(curriculo['id_curriculo'], opiniao)
-                                atualizar_tempo_execucao_opiniao(curriculo['id_curriculo'], tempo_opiniao)
-                                atualizar_tokens_opiniao(curriculo['id_curriculo'], input_tokens, output_tokens)
+                                atualizar_tempo_execucao_opiniao(curriculo['id_curriculo'], tempo_opiniao if tempo_opiniao is not None else 0)
+                                atualizar_tokens_opiniao(curriculo['id_curriculo'], input_tokens if input_tokens is not None else 0,  output_tokens if output_tokens is not None else 0)
                                 atualizar_llm_model(curriculo['id_curriculo'], model_name)
-                                atualizar_custo_opiniao(curriculo['id_curriculo'], custo_chamada)
+                                atualizar_custo_opiniao(curriculo['id_curriculo'], custo_chamada if custo_chamada is not None else 0)
                     else:
                         # Salva frase padrão para quem não atingiu a nota de corte
                         atualizar_opiniao_curriculo(curriculo['id_curriculo'], f"Candidato não atingiu a nota de corte ({score_de_corte}) para análise crítica.")
