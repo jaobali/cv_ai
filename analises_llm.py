@@ -8,7 +8,7 @@ from dotenv import load_dotenv, find_dotenv
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
-from typing import Optional
+# from typing import Optional
 from typing import List
 
 # Carregar variáveis de ambiente
@@ -16,7 +16,7 @@ dotenv_path = find_dotenv()
 _ = load_dotenv(dotenv_path)
 
 class ResumoCurriculo(BaseModel):
-    nome_completo: Optional[str] = Field(None, description="Nome completo do candidato. Deve estar escrito todo em letra maiúscula.")
+    nome_completo: List[str] = Field(None, description="Nome completo do candidato. Deve estar escrito todo em letra maiúscula.")
     experiencia: List[str] = Field(None, description="Resumo da experiência profissional")
     habilidades: List[str] = Field(None, description="Principais habilidades")
     educacao: List[str] = Field(None, description="Formação educacional")
@@ -48,7 +48,7 @@ def gerar_resumo_curriculo(texto_markdown):
         Seu objetivo é extrair as informações do curriculo e retornar um resumo do mesmo em formato JSON.
         Lembre-se de que esses curriculos estão em formato markdown e foram extraídos de arquivos pdf por um certo processo de extração de texto.
         Portanto, as vezes, as informações não estarão perfeitamente em seu capítulos correspondentes. Assim, analise as informação como um todo.
-        Se você não encontrar alguma informação pedida no corriculo coloque ["Não encontrado"] no campo correspondente neste formato de lista mencionado.
+        Se você não encontrar alguma informação pedida no corriculo coloque ["Não encontrado"] no campo correspondente explicitamente neste formato de lista mencionado.
         Necessariamente preciso que o output seja em formato JSON para análises posteriores.
         Ignore strings no formato "<!-- image -->", elas representam posições onde imagens foram detectadas no curriculo.
         Não escreva nada além do formato JSON solicitado.
