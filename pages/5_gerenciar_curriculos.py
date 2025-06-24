@@ -6,12 +6,26 @@ from database import (
 )
 import pandas as pd
 
+import psutil
+import os
+
 # Configuração da página
 st.set_page_config(
     page_title="Gerenciar Currículos",
     page_icon="📄",
     layout="wide"
 )
+
+def get_memory_usage():
+    """Retorna o uso atual de memória RAM do processo do app em MB"""
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
+    return mem_usage_mb
+
+# Mostra o uso de RAM na tela
+ram = get_memory_usage()
+st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 # CSS para remover botões padrão
 st.markdown("""

@@ -2,6 +2,9 @@ import streamlit as st
 from PIL import Image
 from database import contar_vagas_ativas_por_usuario, contar_curriculos_por_usuario
 
+import psutil
+import os
+
 # Configuração da página
 st.set_page_config(
     page_title="Analisador de Currículos IA",
@@ -9,6 +12,17 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="auto"
 )
+
+def get_memory_usage():
+    """Retorna o uso atual de memória RAM do processo do app em MB"""
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
+    return mem_usage_mb
+
+# Mostra o uso de RAM na tela
+ram = get_memory_usage()
+st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 
 # INJEÇÃO DE CSS PARA REMOVER OS BOTÕES PADRÃO

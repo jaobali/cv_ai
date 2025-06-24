@@ -27,6 +27,9 @@ from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
+import psutil
+import os
+
 artifacts_dir = Path(__file__).parent.parent / "docling_models"
 
 pipeline_options = PdfPipelineOptions(
@@ -48,6 +51,17 @@ st.set_page_config(
     page_icon="📤",
     layout="centered"
 )
+
+def get_memory_usage():
+    """Retorna o uso atual de memória RAM do processo do app em MB"""
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
+    return mem_usage_mb
+
+# Mostra o uso de RAM na tela
+ram = get_memory_usage()
+st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 # INJEÇÃO DE CSS PARA REMOVER OS BOTÕES PADRÃO
 st.markdown("""
