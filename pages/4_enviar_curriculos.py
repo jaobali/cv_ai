@@ -52,7 +52,7 @@ pipeline_options = PdfPipelineOptions(
     generate_page_images = False,
     generate_picture_images = False,
     generate_table_images = False,
-    generate_parsed_pages = False
+    generate_parsed_pages = True
 )
 
 converter = DocumentConverter(
