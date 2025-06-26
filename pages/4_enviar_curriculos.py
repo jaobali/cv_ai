@@ -13,7 +13,6 @@ from database import (
     atualizar_custo_resumo
 )
 from datetime import datetime
-# from docling.document_converter import DocumentConverter
 from pathlib import Path
 import pandas as pd
 from analises_llm import gerar_resumo_curriculo
@@ -24,18 +23,36 @@ import shutil
 
 from pathlib import Path
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, EasyOcrOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 import psutil
-import os
+# import os
 
 artifacts_dir = Path(__file__).parent.parent / "docling_models"
 
 pipeline_options = PdfPipelineOptions(
-    artifacts_path=str(artifacts_dir),
-    # Se quiser OCR:
-    # ocr_options=EasyOcrOptions(download_enabled=False)
+    artifacts_path = str(artifacts_dir),
+    do_table_structure = False,  # True: perform table structure extraction
+    do_ocr = False,  # True: perform OCR, replace programmatic PDF text
+    do_code_enrichment = False,  # True: perform code OCR
+    do_formula_enrichment = False,  # True: perform formula OCR, return Latex code
+    do_picture_classification = False , # True: classify pictures in documents
+    do_picture_description = False , # True: run describe pictures in documents
+    force_backend_text = False,  # (To be used with vlms, or other generative models)
+    # If True, text from backend will be used instead of generated text
+
+    # table_structure_options: TableStructureOptions = TableStructureOptions()
+    ocr_options = EasyOcrOptions(),
+    # picture_description_options: PictureDescriptionBaseOptions = (
+    #     smolvlm_picture_description
+    # )
+
+    # images_scale: float = 1.0
+    generate_page_images = False,
+    generate_picture_images = False,
+    generate_table_images = False,
+    generate_parsed_pages = False
 )
 
 converter = DocumentConverter(
@@ -185,8 +202,12 @@ else:
                 total_md = len(curriculos_para_processar)
                 for i, (index, row) in enumerate(curriculos_para_processar.iterrows()):
                     start_time = time.time()
-                    converter = DocumentConverter()
-                    doc = converter.convert(str(Path(caminhos_arquivos[i])))
+                    # converter = DocumentConverter()
+                    doc = converter.convert(
+                        str(Path(caminhos_arquivos[i])),
+                        max_num_pages=20,
+                        max_file_size=5_000_000
+                    )
                     md = doc.document.export_to_markdown()
                     processing_time = time.time() - start_time
 

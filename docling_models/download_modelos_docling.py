@@ -1,9 +1,18 @@
 from docling.utils.model_downloader import download_models
-from docling.models.layout_model import LayoutModel
-from docling.models.utils.hf_model_download import snapshot_download
-from docling.utils.model_downloader import download_models
+from pathlib import Path
 
-# Baixa apenas o layout model
-snapshot_download("ds4sd/docling-models", revision="v2.2.0", local_dir="./docling_models/layout_model")
-
-download_models(models=["layout", "easyocr"])
+if __name__ == "__main__":
+    print("Baixando os modelos necessários para o Docling (layout, tableformer, easyocr etc.)...")
+    download_models(
+        output_dir=Path(r'C:\Users\Joao\Documents\GitHub\cv_ai\docling_models'),
+        force=False,
+        progress=True,
+        with_layout=True,
+        with_tableformer=True,
+        with_code_formula=True,
+        with_picture_classifier=True,
+        with_smolvlm=False,
+        with_granite_vision=False,
+        with_easyocr=True,
+    )
+    print("Download dos modelos concluído!")
