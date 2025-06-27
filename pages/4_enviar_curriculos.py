@@ -203,21 +203,34 @@ else:
                 st.session_state['ultimos_curriculos_upados'] = ids_ultimos_upados
 
                 total_md = len(curriculos_para_processar)
+                arquivos_grandes = []  # Lista para armazenar nomes de arquivos grandes
+                arquivos_invalidos = []  # Lista para armazenar arquivos que deram erro de conversão
                 for i, (index, row) in enumerate(curriculos_para_processar.iterrows()):
                     start_time = time.time()
-                    # converter = DocumentConverter()
-                    doc = converter.convert(
-                        str(Path(caminhos_arquivos[i])),
-                        max_num_pages=20,
-                        max_file_size=5_000_000
-                    )
-                    md = doc.document.export_to_markdown()
-                    processing_time = time.time() - start_time
+                    caminho_arquivo = str(Path(caminhos_arquivos[i]))
+                    # Verifica tamanho do arquivo antes de processar
+                    tamanho_arquivo = os.path.getsize(caminho_arquivo)
+                    if tamanho_arquivo > 5_000_000:  # 5MB
+                        arquivos_grandes.append(os.path.basename(caminho_arquivo))
+                        erros += 1
+                    else:
+                        try:
+                            doc = converter.convert(
+                                caminho_arquivo,
+                                max_num_pages=20,
+                                max_file_size=5_000_000
+                            )
+                            md = doc.document.export_to_markdown()
+                            processing_time = time.time() - start_time
 
-                    atualizar_md_curriculo(row['id_curriculo'], md)
-                    atualizar_tempo_execucao_md(row['id_curriculo'], processing_time)
-
-                    # Atualiza progresso da etapa de markdown
+                            atualizar_md_curriculo(row['id_curriculo'], md)
+                            atualizar_tempo_execucao_md(row['id_curriculo'], processing_time)
+                        except Exception as e:
+                            if os.path.basename(caminho_arquivo) not in arquivos_grandes:
+                                arquivos_invalidos.append(os.path.basename(caminho_arquivo))
+                                erros += 1
+                            # Não atualiza o curriculo, só pula
+                    # Atualiza progresso da etapa de markdown (sempre avança, independente de erro)
                     progresso_etapa = (i + 1) / total_md
                     progresso_atual = etapas['upload'] + (progresso_etapa * etapas['markdown'])
                     progress_bar.progress(progresso_atual)
@@ -227,6 +240,13 @@ else:
                     shutil.rmtree(UPLOAD_DIR)
                 except Exception as e:
                     st.warning(f"Não foi possível remover a pasta temporária: {str(e)}")
+
+                # Exibe mensagem sobre arquivos grandes não processados
+                if arquivos_grandes:
+                    st.warning(f"Os seguintes arquivos não foram processados por excederem o tamanho máximo permitido (5MB): {', '.join(arquivos_grandes)}")
+                # Exibe mensagem sobre arquivos inválidos
+                if arquivos_invalidos:
+                    st.warning(f"Os seguintes arquivos não foram processados por erro de conversão ou formato inválido: {', '.join(arquivos_invalidos)}")
 
                 # Etapa 3: Gerando Resumo
                 status_text.text("🧠 Gerando resumos dos currículos...")
@@ -238,7 +258,11 @@ else:
                     curriculos_cadastrados = [c for c in curriculos_cadastrados if c['id_curriculo'] in ids_ultimos]
 
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
-                df_curriculos_cadastrados = df_curriculos_cadastrados.loc[df_curriculos_cadastrados['status_resumo_llm'] == False]
+                df_curriculos_cadastrados = df_curriculos_cadastrados.loc[
+                    (df_curriculos_cadastrados['status_resumo_llm'] == False) &
+                    (df_curriculos_cadastrados['md'].notnull()) &
+                    (df_curriculos_cadastrados['md'].str.strip() != '')
+                ]
                 arquivos_para_resumo = df_curriculos_cadastrados[['id_curriculo','md']]
 
                 # Limite de 40 currículos por batch (OpenAI docs, gpt-4o-mini)
@@ -295,7 +319,9 @@ else:
                 df_curriculos_cadastrados = pd.DataFrame(curriculos_cadastrados)
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[
                     (df_curriculos_cadastrados['status_md'] == True) &
-                    (df_curriculos_cadastrados['status_resumo_llm'] == True)
+                    (df_curriculos_cadastrados['status_resumo_llm'] == True) &
+                    (df_curriculos_cadastrados['md'].notnull()) &
+                    (df_curriculos_cadastrados['md'].str.strip() != '')
                 ]
                 arquivos_para_nome_candidato = df_curriculos_cadastrados[['id_curriculo','resumo_llm']]
 
@@ -325,14 +351,8 @@ else:
                 if ids_nomes:
                     atualizar_nome_candidato(ids_nomes, nomes_extraidos)
 
-                # Finaliza o progresso
+                # Finaliza o progresso e exibe mensagem de conclusão após extração de nomes
                 progress_bar.progress(1.0)
                 status_text.text("✅ Processamento concluído!")
                 progress_bar.empty()
-                status_text.empty()
                 st.session_state['processando_curriculos'] = False
-
-                if sucessos > 0:
-                    st.success(f"✅ {sucessos} currículo(s) enviado(s) com sucesso!")
-                if erros > 0:
-                    st.error(f"❌ {erros} currículo(s) falhou/falharam no envio.")
