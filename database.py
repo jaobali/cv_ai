@@ -253,54 +253,87 @@ def atualizar_md_curriculo(id_curriculo, md):
     conn.close()
 
 def atualizar_resumo_curriculo(id_curriculo, resumo: dict):
-    """Atualiza o resumo LLM no banco de dados"""
+    """Atualiza o resumo LLM no banco de dados. Aceita id único ou lista de ids e resumos."""
     conn = get_connection()
     cursor = conn.cursor()
-    resumo_json = json.dumps(resumo, ensure_ascii=False)
-    cursor.execute("""
-    UPDATE curriculos
-    SET resumo_llm = %s, status_resumo_llm = TRUE
-    WHERE id_curriculo = %s
-    """, (resumo_json, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            resumo_json = json.dumps(resumo[i], ensure_ascii=False)
+            cursor.execute("""
+            UPDATE curriculos
+            SET resumo_llm = %s, status_resumo_llm = TRUE
+            WHERE id_curriculo = %s
+            """, (resumo_json, idc))
+    else:
+        resumo_json = json.dumps(resumo, ensure_ascii=False)
+        cursor.execute("""
+        UPDATE curriculos
+        SET resumo_llm = %s, status_resumo_llm = TRUE
+        WHERE id_curriculo = %s
+        """, (resumo_json, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_nome_candidato(id_curriculo, nome_candidato):
-    """Atualiza o nome do candidato no banco de dados"""
+    """Atualiza o nome do candidato no banco de dados. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-    UPDATE curriculos
-    SET nome_candidato = %s
-    WHERE id_curriculo = %s
-    """, (nome_candidato, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET nome_candidato = %s
+            WHERE id_curriculo = %s
+            """, (nome_candidato[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET nome_candidato = %s
+        WHERE id_curriculo = %s
+        """, (nome_candidato, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_opiniao_curriculo(id_curriculo, opiniao_llm):
-    """Atualiza a opinião LLM do currículo e marca como processado"""
+    """Atualiza a opinião LLM do currículo e marca como processado. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE curriculos
-        SET opiniao_llm = %s, status_opiniao_llm = TRUE
-        WHERE id_curriculo = %s
-    """, (opiniao_llm, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+                UPDATE curriculos
+                SET opiniao_llm = %s, status_opiniao_llm = TRUE
+                WHERE id_curriculo = %s
+            """, (opiniao_llm[i], idc))
+    else:
+        cursor.execute("""
+            UPDATE curriculos
+            SET opiniao_llm = %s, status_opiniao_llm = TRUE
+            WHERE id_curriculo = %s
+        """, (opiniao_llm, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_score_curriculo(id_curriculo, score):
-    """Atualiza o score LLM do currículo e marca como processado"""
+    """Atualiza o score LLM do currículo e marca como processado. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE curriculos
-        SET score_llm = %s, status_score_llm = TRUE
-        WHERE id_curriculo = %s
-    """, (score, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+                UPDATE curriculos
+                SET score_llm = %s, status_score_llm = TRUE
+                WHERE id_curriculo = %s
+            """, (score[i], idc))
+    else:
+        cursor.execute("""
+            UPDATE curriculos
+            SET score_llm = %s, status_score_llm = TRUE
+            WHERE id_curriculo = %s
+        """, (score, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
@@ -419,145 +452,211 @@ def atualizar_tempo_execucao_md(id_curriculo, tempo_segundos):
     conn.close()
 
 def atualizar_tempo_execucao_resumo(id_curriculo, tempo_segundos):
-    """Atualiza o tempo de execução do resumo em segundos"""
+    """Atualiza o tempo de execução do resumo em segundos. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-    UPDATE curriculos 
-    SET resumo_llm_time_execution = %s
-    WHERE id_curriculo = %s
-    """, (tempo_segundos, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos 
+            SET resumo_llm_time_execution = %s
+            WHERE id_curriculo = %s
+            """, (tempo_segundos[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos 
+        SET resumo_llm_time_execution = %s
+        WHERE id_curriculo = %s
+        """, (tempo_segundos, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_tempo_execucao_opiniao(id_curriculo, tempo_segundos):
-    """Atualiza o tempo de execução da opinião em segundos"""
+    """Atualiza o tempo de execução da opinião em segundos. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-    UPDATE curriculos 
-    SET opiniao_llm_time_execution = %s
-    WHERE id_curriculo = %s
-    """, (tempo_segundos, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos 
+            SET opiniao_llm_time_execution = %s
+            WHERE id_curriculo = %s
+            """, (tempo_segundos[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos 
+        SET opiniao_llm_time_execution = %s
+        WHERE id_curriculo = %s
+        """, (tempo_segundos, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_tempo_execucao_score(id_curriculo, tempo_segundos):
-    """Atualiza o tempo de execução do score em segundos"""
+    """Atualiza o tempo de execução do score em segundos. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-    UPDATE curriculos 
-    SET score_llm_time_execution = %s
-    WHERE id_curriculo = %s
-    """, (tempo_segundos, id_curriculo))
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos 
+            SET score_llm_time_execution = %s
+            WHERE id_curriculo = %s
+            """, (tempo_segundos[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos 
+        SET score_llm_time_execution = %s
+        WHERE id_curriculo = %s
+        """, (tempo_segundos, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_tokens_resumo(id_curriculo, input_tokens, output_tokens):
-    """Atualiza os tokens de input e output do resumo LLM"""
+    """Atualiza os tokens de input e output do resumo LLM. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET resumo_llm_input_tokens = %s, resumo_llm_output_tokens = %s
-    WHERE id_curriculo = %s
-    """, (input_tokens, output_tokens, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET resumo_llm_input_tokens = %s, resumo_llm_output_tokens = %s
+            WHERE id_curriculo = %s
+            """, (input_tokens[i], output_tokens[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET resumo_llm_input_tokens = %s, resumo_llm_output_tokens = %s
+        WHERE id_curriculo = %s
+        """, (input_tokens, output_tokens, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_tokens_opiniao(id_curriculo, input_tokens, output_tokens):
-    """Atualiza os tokens de input e output da opinião LLM"""
+    """Atualiza os tokens de input e output da opinião LLM. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET opiniao_llm_input_tokens = %s, opiniao_llm_output_tokens = %s
-    WHERE id_curriculo = %s
-    """, (input_tokens, output_tokens, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET opiniao_llm_input_tokens = %s, opiniao_llm_output_tokens = %s
+            WHERE id_curriculo = %s
+            """, (input_tokens[i], output_tokens[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET opiniao_llm_input_tokens = %s, opiniao_llm_output_tokens = %s
+        WHERE id_curriculo = %s
+        """, (input_tokens, output_tokens, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_tokens_score(id_curriculo, input_tokens, output_tokens):
-    """Atualiza os tokens de input e output do score LLM"""
+    """Atualiza os tokens de input e output do score LLM. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET score_llm_input_tokens = %s, score_llm_output_tokens = %s
-    WHERE id_curriculo = %s
-    """, (input_tokens, output_tokens, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET score_llm_input_tokens = %s, score_llm_output_tokens = %s
+            WHERE id_curriculo = %s
+            """, (input_tokens[i], output_tokens[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET score_llm_input_tokens = %s, score_llm_output_tokens = %s
+        WHERE id_curriculo = %s
+        """, (input_tokens, output_tokens, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_llm_model(id_curriculo, model_name):
-    """Atualiza o modelo LLM utilizado"""
+    """Atualiza o modelo LLM utilizado. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET llm_model = %s
-    WHERE id_curriculo = %s
-    """, (model_name, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET llm_model = %s
+            WHERE id_curriculo = %s
+            """, (model_name if not isinstance(model_name, list) else model_name[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET llm_model = %s
+        WHERE id_curriculo = %s
+        """, (model_name, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_custo_resumo(id_curriculo, custo_chamada):
-    """Atualiza o custo da chamada do resumo LLM em USD"""
+    """Atualiza o custo da chamada do resumo LLM em USD. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET resumo_llm_custo_chamada_USD = %s
-    WHERE id_curriculo = %s
-    """, (custo_chamada, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET resumo_llm_custo_chamada_USD = %s
+            WHERE id_curriculo = %s
+            """, (custo_chamada[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET resumo_llm_custo_chamada_USD = %s
+        WHERE id_curriculo = %s
+        """, (custo_chamada, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_custo_opiniao(id_curriculo, custo_chamada):
-    """Atualiza o custo da chamada da opinião LLM em USD"""
+    """Atualiza o custo da chamada da opinião LLM em USD. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET opiniao_llm_custo_chamada_USD = %s
-    WHERE id_curriculo = %s
-    """, (custo_chamada, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET opiniao_llm_custo_chamada_USD = %s
+            WHERE id_curriculo = %s
+            """, (custo_chamada[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET opiniao_llm_custo_chamada_USD = %s
+        WHERE id_curriculo = %s
+        """, (custo_chamada, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()
 
 def atualizar_custo_score(id_curriculo, custo_chamada):
-    """Atualiza o custo da chamada do score em USD"""
+    """Atualiza o custo da chamada do score em USD. Aceita id único ou lista."""
     conn = get_connection()
     cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE curriculos
-    SET score_llm_custo_chamada_USD = %s
-    WHERE id_curriculo = %s
-    """, (custo_chamada, id_curriculo))
-
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET score_llm_custo_chamada_USD = %s
+            WHERE id_curriculo = %s
+            """, (custo_chamada[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET score_llm_custo_chamada_USD = %s
+        WHERE id_curriculo = %s
+        """, (custo_chamada, id_curriculo))
     conn.commit()
     cursor.close()
     conn.close()

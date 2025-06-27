@@ -15,7 +15,7 @@ from database import (
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-from analises_llm import gerar_resumo_curriculo
+from analises_llm import gerar_resumo_curriculo, gerar_resumo_curriculos_batch
 import json
 import time
 import os
@@ -28,6 +28,8 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 import psutil
 # import os
+
+from langchain_community.callbacks.manager import get_openai_callback
 
 artifacts_dir = Path(__file__).parent.parent / "docling_models"
 
@@ -144,6 +146,7 @@ else:
 
         if arquivos and vaga_selecionada:
             if st.button("Enviar Currículos", type="primary"):
+                st.warning("⚠️ Não saia desta página enquanto o processamento estiver em andamento!")
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 sucessos = 0
@@ -238,19 +241,47 @@ else:
                 df_curriculos_cadastrados = df_curriculos_cadastrados.loc[df_curriculos_cadastrados['status_resumo_llm'] == False]
                 arquivos_para_resumo = df_curriculos_cadastrados[['id_curriculo','md']]
 
-                total_resumo = len(arquivos_para_resumo)
-                for i, (index, row) in enumerate(arquivos_para_resumo.iterrows()):
-                    resumo, processing_time, input_tokens, output_tokens, model_name, custo_chamada = gerar_resumo_curriculo(row['md'])
-                    atualizar_resumo_curriculo(row['id_curriculo'], resumo.model_dump_json())
-                    atualizar_tempo_execucao_resumo(row['id_curriculo'], processing_time)
-                    atualizar_tokens_resumo(row['id_curriculo'], input_tokens, output_tokens)
-                    atualizar_llm_model(row['id_curriculo'], model_name)
-                    atualizar_custo_resumo(row['id_curriculo'], custo_chamada)
+                # Limite de 40 currículos por batch (OpenAI docs, gpt-4o-mini)
+                BATCH_SIZE = 40
+                lista_markdowns = arquivos_para_resumo['md'].tolist()
+                ids = arquivos_para_resumo['id_curriculo'].tolist()
 
-                    # Atualiza progresso da etapa de resumo
-                    progresso_etapa = (i + 1) / total_resumo
-                    progresso_atual = etapas['upload'] + etapas['markdown'] + (progresso_etapa * etapas['resumo'])
+                def split_batches(lista, batch_size):
+                    for i in range(0, len(lista), batch_size):
+                        yield lista[i:i + batch_size]
+
+                total_resumo = len(lista_markdowns)
+                batches = list(split_batches(list(zip(ids, lista_markdowns)), BATCH_SIZE))
+                batch_count = len(batches)
+                processed = 0
+
+                for batch_idx, batch in enumerate(batches):
+                    batch_ids, batch_markdowns = zip(*batch)
+                    from langchain_community.callbacks.manager import get_openai_callback
+                    from analises_llm import iniciar_modelo
+                    with get_openai_callback() as cb:
+                        start_time = time.time()
+                        modelo = iniciar_modelo()
+                        resultados = gerar_resumo_curriculos_batch(list(batch_markdowns))
+                        processing_time = time.time() - start_time
+                        n = len(resultados)
+                        tempo_por_curriculo = processing_time / n if n else 0
+                        tokens_entrada = cb.prompt_tokens // n if n else 0
+                        tokens_saida = cb.completion_tokens // n if n else 0
+                        custo_chamada = cb.total_cost / n if n else 0
+                        model_name = modelo.model_name if hasattr(modelo, 'model_name') else str(modelo)
+                    # Atualização em lote usando as funções otimizadas
+                    atualizar_resumo_curriculo(list(batch_ids), [r.model_dump() for r in resultados])
+                    atualizar_tempo_execucao_resumo(list(batch_ids), [tempo_por_curriculo]*n)
+                    atualizar_tokens_resumo(list(batch_ids), [tokens_entrada]*n, [tokens_saida]*n)
+                    atualizar_llm_model(list(batch_ids), [model_name]*n)
+                    atualizar_custo_resumo(list(batch_ids), [custo_chamada]*n)
+                    processed += len(batch)
+                    progresso_atual = etapas['upload'] + etapas['markdown'] + (processed / total_resumo) * etapas['resumo']
                     progress_bar.progress(progresso_atual)
+                    # Delay de 10 segundos entre batches, exceto após o último
+                    if batch_idx < len(batches) - 1:
+                        time.sleep(10)
 
                 # Etapa 4: Extraindo nomes
                 status_text.text("👤 Extraindo nomes dos candidatos...")
@@ -269,24 +300,37 @@ else:
                 arquivos_para_nome_candidato = df_curriculos_cadastrados[['id_curriculo','resumo_llm']]
 
                 total_nomes = len(arquivos_para_nome_candidato)
+                nomes_extraidos = []
+                ids_nomes = []
                 for i, (index, row) in enumerate(arquivos_para_nome_candidato.iterrows()):
-                    resumo_json = json.loads(json.loads(row['resumo_llm']))
-                    nome_candidato = resumo_json['nome_completo']
+                    nome_candidato = "nao encontrado"
+                    try:
+                        resumo_json = json.loads(json.loads(row['resumo_llm']))
+                        nome_candidato = resumo_json['nome_completo']
+                    except Exception:
+                        try:
+                            resumo_json = json.loads(row['resumo_llm'])
+                            nome_candidato = resumo_json['nome_completo']
+                        except Exception:
+                            nome_candidato = "nao encontrado"
                     if isinstance(nome_candidato, list):
                         nome_candidato = nome_candidato[0]
-                        print(nome_candidato)
-                    atualizar_nome_candidato(row['id_curriculo'], nome_candidato)
-
+                    nomes_extraidos.append(nome_candidato)
+                    ids_nomes.append(row['id_curriculo'])
                     # Atualiza progresso da etapa de nomes
                     progresso_etapa = (i + 1) / total_nomes
                     progresso_atual = etapas['upload'] + etapas['markdown'] + etapas['resumo'] + (progresso_etapa * etapas['nome'])
                     progress_bar.progress(progresso_atual)
+                # Atualização em batch dos nomes
+                if ids_nomes:
+                    atualizar_nome_candidato(ids_nomes, nomes_extraidos)
 
                 # Finaliza o progresso
                 progress_bar.progress(1.0)
                 status_text.text("✅ Processamento concluído!")
                 progress_bar.empty()
                 status_text.empty()
+                st.session_state['processando_curriculos'] = False
 
                 if sucessos > 0:
                     st.success(f"✅ {sucessos} currículo(s) enviado(s) com sucesso!")

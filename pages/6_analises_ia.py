@@ -87,7 +87,7 @@ with col2:
         "Score de corte para análise crítica",
         min_value=0.0,
         max_value=10.0,
-        value=5.0,
+        value=7.0,
         step=0.1,
         format="%.1f"
     )
@@ -100,9 +100,16 @@ with col3:
 
 # Processamento principal
 if botao_processar:
+    st.warning("⚠️ Não saia desta página enquanto o processamento estiver em andamento!")
     progress_bar = st.progress(0)
     status_text = st.empty()
-
+    # Define as etapas do processo e seus pesos
+    etapas = {
+        'score': 0.5,    # 50% do processo
+        'opiniao': 0.5   # 50% do processo
+    }
+    progresso_atual = 0
+    status_text.text("⚙️ Iniciando atualização...")
     try:
         # Lista apenas os currículos do usuário logado
         curriculos = listar_curriculos_por_usuario(st.session_state.get('user_id'))
@@ -116,28 +123,48 @@ if botao_processar:
         if not curriculos:
             st.info("ℹ️ Nenhum currículo encontrado para processamento")
         else:
-            # 1. Score com LLM
-            for i, curriculo in enumerate(curriculos):
-                nome_candidato = curriculo.get('nome_candidato', f'Currículo {curriculo["id_curriculo"]}')
-                status_text.text(f"Gerando score do candidato {i+1}/{total}: {nome_candidato}")
-                progress_bar.progress((i + 1) / total)
-                try:
-                    if curriculo['status_score_llm'] == False and curriculo['resumo_llm']:
-                        desc_vaga = f'''
-                            Atividades: {curriculo['atividades']}\n
-                            Requisitos: {curriculo['requisitos']}\n
-                            Diferenciais: {curriculo['diferenciais']}\n
-                            '''
-                        score, tempo_score, input_tokens, output_tokens, model_name, custo_chamada = analises_llm.gerar_score_curriculo(curriculo['resumo_llm'], desc_vaga)
-                        if score is not None:
-                            atualizar_score_curriculo(curriculo['id_curriculo'], score)
-                            atualizar_tempo_execucao_score(curriculo['id_curriculo'], tempo_score if tempo_score is not None else 0)
-                            atualizar_tokens_score(curriculo['id_curriculo'], input_tokens if input_tokens is not None else 0,  output_tokens if output_tokens is not None else 0)
-                            atualizar_llm_model(curriculo['id_curriculo'], model_name)
-                            atualizar_custo_score(curriculo['id_curriculo'], custo_chamada if custo_chamada is not None else 0)
-                except Exception as e:
-                    st.error(f"Erro no currículo {curriculo['id_curriculo']}: {str(e)}")
-                    continue
+            # 1. Score com LLM (em batch)
+            curriculos_score = [c for c in curriculos if c['status_score_llm'] == False and c['resumo_llm']]
+            total_score = len(curriculos_score)
+            processed_score = 0
+            if curriculos_score:
+                BATCH_SIZE = 40
+                for i in range(0, len(curriculos_score), BATCH_SIZE):
+                    batch = curriculos_score[i:i+BATCH_SIZE]
+                    batch_ids = [c['id_curriculo'] for c in batch]
+                    batch_resumos = [c['resumo_llm'] for c in batch]
+                    batch_descs = [f"""
+                        Atividades: {c['atividades']}\n
+                        Requisitos: {c['requisitos']}\n
+                        Diferenciais: {c['diferenciais']}\n
+                        """ for c in batch]
+                    import time
+                    from langchain_community.callbacks.manager import get_openai_callback
+                    from analises_llm import iniciar_modelo
+                    modelo = iniciar_modelo()
+                    with get_openai_callback() as cb:
+                        start_time = time.time()
+                        scores = analises_llm.gerar_score_curriculos_batch(batch_resumos, batch_descs)
+                        processing_time = time.time() - start_time
+                        n = len(scores)
+                        tempo_por_curriculo = processing_time / n if n else 0
+                        tokens_entrada = cb.prompt_tokens // n if n else 0
+                        tokens_saida = cb.completion_tokens // n if n else 0
+                        custo_chamada = cb.total_cost / n if n else 0
+                        model_name = modelo.model_name if hasattr(modelo, 'model_name') else str(modelo)
+                    # Atualização em batch
+                    atualizar_score_curriculo(batch_ids, scores)
+                    atualizar_tempo_execucao_score(batch_ids, [tempo_por_curriculo]*n)
+                    atualizar_tokens_score(batch_ids, [tokens_entrada]*n, [tokens_saida]*n)
+                    atualizar_llm_model(batch_ids, [model_name]*n)
+                    atualizar_custo_score(batch_ids, [custo_chamada]*n)
+                    processed_score += len(batch)
+                    progresso_atual = (processed_score / total_score) * etapas['score']
+                    progress_bar.progress(progresso_atual)
+                    status_text.text(f"🧮 Gerando score dos currículos... ({processed_score}/{total_score})")
+                    # Delay de 10 segundos entre batches, exceto após o último
+                    if i + BATCH_SIZE < len(curriculos_score):
+                        time.sleep(10)
 
             # Atualiza curriculos após score
             curriculos = listar_curriculos_por_usuario(st.session_state.get('user_id'))
@@ -153,39 +180,65 @@ if botao_processar:
             ids_ultimos = st.session_state.get('ultimos_curriculos_upados')
             if ids_ultimos:
                 curriculos = curriculos[curriculos['id_curriculo'].isin(ids_ultimos)]
-            total = len(curriculos)
+            total_opiniao = len(curriculos)
+            processed_opiniao = 0
 
-            # 2. Opinião com LLM (apenas para quem atingiu score de corte)
-            for i, (_, curriculo) in enumerate(curriculos.iterrows()):
-                nome_candidato = curriculo['nome_candidato']
-                status_text.text(f"Gerando análise crítica {i+1}/{total}: {nome_candidato}")
-                progress_bar.progress((i + 1) / total)
-                try:
-                    score = curriculo['score_llm']
-                    if score is not None and float(score) > float(score_de_corte):
-                        if curriculo['status_opiniao_llm'] == False and curriculo['resumo_llm']:
-                            desc_vaga = f'''
-                            Atividades: {curriculo['atividades']}\n
-                            Requisitos: {curriculo['requisitos']}\n
-                            Diferenciais: {curriculo['diferenciais']}\n
-                            '''
-                            opiniao, tempo_opiniao, input_tokens, output_tokens, model_name, custo_chamada = analises_llm.gerar_opiniao_curriculo(curriculo['resumo_llm'], desc_vaga)
-                            if opiniao:
-                                atualizar_opiniao_curriculo(curriculo['id_curriculo'], opiniao)
-                                atualizar_tempo_execucao_opiniao(curriculo['id_curriculo'], tempo_opiniao if tempo_opiniao is not None else 0)
-                                atualizar_tokens_opiniao(curriculo['id_curriculo'], input_tokens if input_tokens is not None else 0,  output_tokens if output_tokens is not None else 0)
-                                atualizar_llm_model(curriculo['id_curriculo'], model_name)
-                                atualizar_custo_opiniao(curriculo['id_curriculo'], custo_chamada if custo_chamada is not None else 0)
-                    else:
-                        # Salva frase padrão para quem não atingiu a nota de corte
-                        atualizar_opiniao_curriculo(curriculo['id_curriculo'], f"Candidato não atingiu a nota de corte ({score_de_corte}) para análise crítica.")
-                        atualizar_tempo_execucao_opiniao(curriculo['id_curriculo'], 0)
-                        atualizar_tokens_opiniao(curriculo['id_curriculo'], 0, 0)
-                        atualizar_custo_opiniao(curriculo['id_curriculo'], 0)
-                except Exception as e:
-                    st.error(f"Erro no currículo {curriculo['id_curriculo']}: {str(e)}")
-                    continue
-
+            # 2. Opinião com LLM (em batch, apenas para quem atingiu score de corte)
+            curriculos_opiniao = []
+            for _, curriculo in curriculos.iterrows():
+                score = curriculo['score_llm']
+                if score is not None and float(score) > float(score_de_corte):
+                    if curriculo['status_opiniao_llm'] == False and curriculo['resumo_llm']:
+                        curriculos_opiniao.append(curriculo)
+            if curriculos_opiniao:
+                BATCH_SIZE = 40
+                status_text.text("💬 Gerando análises críticas dos currículos...")
+                for i in range(0, len(curriculos_opiniao), BATCH_SIZE):
+                    batch = curriculos_opiniao[i:i+BATCH_SIZE]
+                    batch_ids = [c['id_curriculo'] for c in batch]
+                    batch_resumos = [c['resumo_llm'] for c in batch]
+                    batch_descs = [f"""
+                        Atividades: {c['atividades']}\n
+                        Requisitos: {c['requisitos']}\n
+                        Diferenciais: {c['diferenciais']}\n
+                        """ for c in batch]
+                    import time
+                    from langchain_community.callbacks.manager import get_openai_callback
+                    from analises_llm import iniciar_modelo
+                    modelo = iniciar_modelo()
+                    with get_openai_callback() as cb:
+                        start_time = time.time()
+                        opinioes = analises_llm.gerar_opiniao_curriculos_batch(batch_resumos, batch_descs)
+                        processing_time = time.time() - start_time
+                        n = len(opinioes)
+                        tempo_por_curriculo = processing_time / n if n else 0
+                        tokens_entrada = cb.prompt_tokens // n if n else 0
+                        tokens_saida = cb.completion_tokens // n if n else 0
+                        custo_chamada = cb.total_cost / n if n else 0
+                        model_name = modelo.model_name if hasattr(modelo, 'model_name') else str(modelo)
+                    # Atualização em batch
+                    atualizar_opiniao_curriculo(batch_ids, opinioes)
+                    atualizar_tempo_execucao_opiniao(batch_ids, [tempo_por_curriculo]*n)
+                    atualizar_tokens_opiniao(batch_ids, [tokens_entrada]*n, [tokens_saida]*n)
+                    atualizar_llm_model(batch_ids, [model_name]*n)
+                    atualizar_custo_opiniao(batch_ids, [custo_chamada]*n)
+                    processed_opiniao += len(batch)
+                    progresso_atual = etapas['score'] + (processed_opiniao / total_opiniao) * etapas['opiniao']
+                    progress_bar.progress(progresso_atual)
+                    status_text.text(f"💬 Gerando análises críticas dos currículos... ({processed_opiniao}/{total_opiniao})")
+                    # Delay de 10 segundos entre batches, exceto após o último
+                    if i + BATCH_SIZE < len(curriculos_opiniao):
+                        time.sleep(10)
+            # Para quem não atingiu score de corte
+            for _, curriculo in curriculos.iterrows():
+                score = curriculo['score_llm']
+                if not (score is not None and float(score) > float(score_de_corte)):
+                    atualizar_opiniao_curriculo(curriculo['id_curriculo'], f"Candidato não atingiu a nota de corte ({score_de_corte}) para análise crítica.")
+                    atualizar_tempo_execucao_opiniao(curriculo['id_curriculo'], 0)
+                    atualizar_tokens_opiniao(curriculo['id_curriculo'], 0, 0)
+                    atualizar_custo_opiniao(curriculo['id_curriculo'], 0)
+            progress_bar.progress(1.0)
+            status_text.text("✅ Processamento concluído!")
             st.toast("Processamento concluído com sucesso!", icon="✅")
 
     except Exception as e:
