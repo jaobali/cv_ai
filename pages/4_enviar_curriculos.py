@@ -228,9 +228,10 @@ else:
                             atualizar_tempo_execucao_md(row['id_curriculo'], processing_time)
                         except Exception as e:
                             if os.path.basename(caminho_arquivo) not in arquivos_grandes:
-                                arquivos_invalidos.append(os.path.basename(caminho_arquivo))
+                                arquivos_invalidos.append(f"{os.path.basename(caminho_arquivo)} (erro: {str(e)})")
                                 erros += 1
-                            # Não atualiza o curriculo, só pula
+                            # Opcional: log detalhado para debug
+                            print(f"Erro ao converter {caminho_arquivo}: {e}")
                     # Atualiza progresso da etapa de markdown (sempre avança, independente de erro)
                     progresso_etapa = (i + 1) / total_md
                     progresso_atual = etapas['upload'] + (progresso_etapa * etapas['markdown'])
