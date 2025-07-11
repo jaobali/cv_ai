@@ -10,12 +10,13 @@ from database import (
     atualizar_tempo_execucao_resumo,
     atualizar_tokens_resumo,
     atualizar_llm_model,
-    atualizar_custo_resumo
+    atualizar_custo_resumo,
+    atualizar_curriculos_simultaneos_resumo,
 )
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-from analises_llm import gerar_resumo_curriculo, gerar_resumo_curriculos_batch
+from analises_llm import gerar_resumo_curriculos_batch
 import json
 import time
 import os
@@ -79,8 +80,8 @@ def get_memory_usage():
     return mem_usage_mb
 
 # Mostra o uso de RAM na tela
-ram = get_memory_usage()
-st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
+# ram = get_memory_usage()
+# st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 # INJEÇÃO DE CSS PARA REMOVER OS BOTÕES PADRÃO
 st.markdown("""
@@ -300,6 +301,8 @@ else:
                     atualizar_tokens_resumo(list(batch_ids), [tokens_entrada]*n, [tokens_saida]*n)
                     atualizar_llm_model(list(batch_ids), [model_name]*n)
                     atualizar_custo_resumo(list(batch_ids), [custo_chamada]*n)
+                    # NOVO: Atualiza curriculos_simultaneos_resumo
+                    atualizar_curriculos_simultaneos_resumo(list(batch_ids), [n]*n)
                     processed += len(batch)
                     progresso_atual = etapas['upload'] + etapas['markdown'] + (processed / total_resumo) * etapas['resumo']
                     progress_bar.progress(progresso_atual)

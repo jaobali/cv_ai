@@ -19,8 +19,8 @@ def get_memory_usage():
     return mem_usage_mb
 
 # Mostra o uso de RAM na tela
-ram = get_memory_usage()
-st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
+# ram = get_memory_usage()
+# st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 # INJEÇÃO DE CSS PARA REMOVER OS BOTÕES PADRÃO
 st.markdown("""

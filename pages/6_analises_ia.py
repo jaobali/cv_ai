@@ -9,7 +9,9 @@ from database import (
     atualizar_tokens_score,
     atualizar_llm_model,
     atualizar_custo_opiniao,
-    atualizar_custo_score
+    atualizar_custo_score,
+    atualizar_curriculos_simultaneos_opiniao,
+    atualizar_curriculos_simultaneos_score
 )
 import sys
 import os
@@ -158,6 +160,8 @@ if botao_processar:
                     atualizar_tokens_score(batch_ids, [tokens_entrada]*n, [tokens_saida]*n)
                     atualizar_llm_model(batch_ids, [model_name]*n)
                     atualizar_custo_score(batch_ids, [custo_chamada]*n)
+                    # NOVO: Atualiza curriculos_simultaneos_score
+                    atualizar_curriculos_simultaneos_score(batch_ids, [n]*n)
                     processed_score += len(batch)
                     progresso_atual = (processed_score / total_score) * etapas['score']
                     progress_bar.progress(progresso_atual)
@@ -222,6 +226,8 @@ if botao_processar:
                     atualizar_tokens_opiniao(batch_ids, [tokens_entrada]*n, [tokens_saida]*n)
                     atualizar_llm_model(batch_ids, [model_name]*n)
                     atualizar_custo_opiniao(batch_ids, [custo_chamada]*n)
+                    # NOVO: Atualiza curriculos_simultaneos_opiniao
+                    atualizar_curriculos_simultaneos_opiniao(batch_ids, [n]*n)
                     processed_opiniao += len(batch)
                     progresso_atual = etapas['score'] + (processed_opiniao / total_opiniao) * etapas['opiniao']
                     progress_bar.progress(progresso_atual)

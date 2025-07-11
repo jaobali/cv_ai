@@ -661,5 +661,68 @@ def atualizar_custo_score(id_curriculo, custo_chamada):
     cursor.close()
     conn.close()
 
-if __name__ == "__main__":
-    criar_tabelas()
+def atualizar_curriculos_simultaneos_resumo(id_curriculo, valor):
+    """Atualiza a coluna curriculos_simultaneos_resumo. Aceita id único ou lista."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET curriculos_simultaneos_resumo = %s
+            WHERE id_curriculo = %s
+            """, (valor if not isinstance(valor, list) else valor[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET curriculos_simultaneos_resumo = %s
+        WHERE id_curriculo = %s
+        """, (valor, id_curriculo))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def atualizar_curriculos_simultaneos_opiniao(id_curriculo, valor):
+    """Atualiza a coluna curriculos_simultaneos_opiniao. Aceita id único ou lista."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET curriculos_simultaneos_opiniao = %s
+            WHERE id_curriculo = %s
+            """, (valor if not isinstance(valor, list) else valor[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET curriculos_simultaneos_opiniao = %s
+        WHERE id_curriculo = %s
+        """, (valor, id_curriculo))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def atualizar_curriculos_simultaneos_score(id_curriculo, valor):
+    """Atualiza a coluna curriculos_simultaneos_score. Aceita id único ou lista."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    if isinstance(id_curriculo, list):
+        for i, idc in enumerate(id_curriculo):
+            cursor.execute("""
+            UPDATE curriculos
+            SET curriculos_simultaneos_score = %s
+            WHERE id_curriculo = %s
+            """, (valor if not isinstance(valor, list) else valor[i], idc))
+    else:
+        cursor.execute("""
+        UPDATE curriculos
+        SET curriculos_simultaneos_score = %s
+        WHERE id_curriculo = %s
+        """, (valor, id_curriculo))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# if __name__ == "__main__":
+#     criar_tabelas()
