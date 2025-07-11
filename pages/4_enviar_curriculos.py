@@ -32,7 +32,7 @@ import psutil
 
 from langchain_community.callbacks.manager import get_openai_callback
 
-artifacts_dir = Path(__file__).parent.parent / "docling_models" / "ds4sd--CodeFormula"
+artifacts_dir = Path(__file__).parent.parent / "docling_models" #/ "ds4sd--CodeFormula"
 
 pipeline_options = PdfPipelineOptions(
     artifacts_path = str(artifacts_dir),
