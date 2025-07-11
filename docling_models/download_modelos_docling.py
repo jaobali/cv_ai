@@ -16,3 +16,11 @@ if __name__ == "__main__":
         with_easyocr=False,         # Sem OCR
     )
     print("Download do modelo de layout concluído!")
+
+# precisei executar isso aqui no terminal pq o tamanho do arquivo do modelo é maior que os 100Mb suportado nativamente pelo github
+# git lfs install
+# git lfs track "*.safetensors"
+# git add .gitattributes
+# git add docling_models/ds4sd--docling-models/model_artifacts/layout/model.safetensors
+# git commit -m "Adiciona modelo layout safetensors via LFS"
+# git push
