@@ -723,6 +723,6 @@ def atualizar_curriculos_simultaneos_score(id_curriculo, valor):
     conn.commit()
     cursor.close()
     conn.close()
-
+    
 # if __name__ == "__main__":
 #     criar_tabelas()
