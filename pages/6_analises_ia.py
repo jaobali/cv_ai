@@ -85,16 +85,14 @@ with col1:
     st.title("🧠 Análises com IA de Currículos")
 
 with col2:
-    score_de_corte = st.number_input(
+    score_de_corte = round(st.number_input(
         "Score de corte para análise crítica",
         min_value=0.0,
         max_value=10.0,
         value=7.0,
         step=0.1,
         format="%.1f"
-    )
-
-    st.write(float(score_de_corte))
+    ), 1)
 
 with col3:
     st.write("")
@@ -241,7 +239,7 @@ if botao_processar:
             for _, curriculo in curriculos.iterrows():
                 score = curriculo['score_llm']
                 if not (score is not None and float(score) > float(score_de_corte)):
-                    atualizar_opiniao_curriculo(curriculo['id_curriculo'], f"Candidato não atingiu a nota de corte ({score_de_corte}) para análise crítica.")
+                    atualizar_opiniao_curriculo(curriculo['id_curriculo'], f"Candidato não atingiu a nota de corte ({score_de_corte:.1f}) para análise crítica.")
                     atualizar_tempo_execucao_opiniao(curriculo['id_curriculo'], 0)
                     atualizar_tokens_opiniao(curriculo['id_curriculo'], 0, 0)
                     atualizar_custo_opiniao(curriculo['id_curriculo'], 0)
