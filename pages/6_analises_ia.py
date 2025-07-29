@@ -94,7 +94,7 @@ with col2:
         format="%.1f"
     )
 
-    st.write(score_de_corte)
+    st.write(float(score_de_corte))
 
 with col3:
     st.write("")
