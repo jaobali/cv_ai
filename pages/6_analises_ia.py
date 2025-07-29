@@ -32,16 +32,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def get_memory_usage():
-    """Retorna o uso atual de memória RAM do processo do app em MB"""
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
-    return mem_usage_mb
+# def get_memory_usage():
+#     """Retorna o uso atual de memória RAM do processo do app em MB"""
+#     process = psutil.Process(os.getpid())
+#     mem_info = process.memory_info()
+#     mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
+#     return mem_usage_mb
 
-# Mostra o uso de RAM na tela
-ram = get_memory_usage()
-st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
+# # Mostra o uso de RAM na tela
+# ram = get_memory_usage()
+# st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 
 st.markdown("""
@@ -93,6 +93,8 @@ with col2:
         step=0.1,
         format="%.1f"
     )
+
+    st.write(score_de_corte)
 
 with col3:
     st.write("")
