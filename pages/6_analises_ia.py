@@ -262,6 +262,7 @@ curriculos = listar_curriculos_por_usuario(st.session_state.get('user_id'))
 
 if curriculos:
     df_curriculos = pd.DataFrame(curriculos)
+
     # Mantém apenas a linha com maior score_llm para cada nome_candidato
     df_curriculos = df_curriculos.sort_values('score_llm', ascending=False).drop_duplicates(subset=['nome_candidato', 'id_vaga'], keep='first')
 
