@@ -105,8 +105,25 @@ def criar_tabelas():
 
         llm_model TEXT,
 
+        curriculos_simultaneos_resumo INTEGER,
+        curriculos_simultaneos_opiniao INTEGER,
+        curriculos_simultaneos_score INTEGER,
+
         FOREIGN KEY (id_vaga) REFERENCES vagas(id_vaga),
         FOREIGN KEY (id_usuario_cadastro_curriculo) REFERENCES usuarios(id_usuario)
+    )
+    """)
+
+    # Tabela de sessões de usuário
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        id_session SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        role TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
     )
     """)
 
@@ -723,6 +740,92 @@ def atualizar_curriculos_simultaneos_score(id_curriculo, valor):
     conn.commit()
     cursor.close()
     conn.close()
+
+# Funções para gerenciar sessões de usuário
+def salvar_sessao_usuario(user_data, dias_expiracao=7):
+    """Salva uma sessão de usuário no banco de dados"""
+    from datetime import datetime, timedelta
     
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Remove sessões expiradas
+        cursor.execute("DELETE FROM user_sessions WHERE expires_at < NOW()")
+        
+        # Remove sessões existentes do mesmo usuário
+        cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_data['id'],))
+        
+        # Insere nova sessão
+        expires_at = datetime.now() + timedelta(days=dias_expiracao)
+        cursor.execute("""
+        INSERT INTO user_sessions (user_id, username, role, expires_at)
+        VALUES (%s, %s, %s, %s)
+        """, (user_data['id'], user_data['username'], user_data['role'], expires_at))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro ao salvar sessão: {e}")
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+def carregar_sessao_usuario():
+    """Carrega a sessão de usuário do banco de dados"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Remove sessões expiradas
+        cursor.execute("DELETE FROM user_sessions WHERE expires_at < NOW()")
+        
+        # Busca sessão válida
+        cursor.execute("""
+        SELECT user_id, username, role, expires_at
+        FROM user_sessions
+        WHERE expires_at > NOW()
+        ORDER BY created_at DESC
+        LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        
+        if result:
+            return {
+                'user_id': result[0],
+                'username': result[1],
+                'role': result[2],
+                'expires_at': result[3]
+            }
+        return None
+    except Exception as e:
+        print(f"Erro ao carregar sessão: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def limpar_sessao_usuario(user_id=None):
+    """Remove sessões de usuário do banco de dados"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        if user_id:
+            cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_id,))
+        else:
+            cursor.execute("DELETE FROM user_sessions WHERE expires_at < NOW()")
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro ao limpar sessão: {e}")
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
 # if __name__ == "__main__":
 #     criar_tabelas()

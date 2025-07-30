@@ -1,7 +1,10 @@
 import streamlit as st
 from database import (
     verificar_usuario,
-    criar_usuario
+    criar_usuario,
+    salvar_sessao_usuario,
+    carregar_sessao_usuario,
+    limpar_sessao_usuario
 )
 import time
 import json
@@ -65,31 +68,24 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Função para salvar dados do usuário em session_state (alternativa ao cookie)
+# Função para salvar dados do usuário no banco de dados
 def save_user_session(user_data):
-    st.session_state['saved_username'] = user_data['username']
-    st.session_state['saved_user_id'] = user_data['id']
-    st.session_state['saved_role'] = user_data['role']
-    st.session_state['session_expires'] = (datetime.now() + timedelta(days=7)).isoformat()
-    st.success(f"Dados salvos para usuário: {user_data['username']}")
+    try:
+        salvar_sessao_usuario(user_data)
+        # st.success(f"Dados salvos para usuário: {user_data['username']}")
+    except Exception as e:
+        st.error(f"Erro ao salvar dados: {str(e)}")
 
 # Função para verificar e carregar dados salvos
 def load_user_session():
     try:
-        if 'saved_username' in st.session_state and 'session_expires' in st.session_state:
-            expires = datetime.fromisoformat(st.session_state['session_expires'])
-            if datetime.now() < expires:
-                data = {
-                    'username': st.session_state['saved_username'],
-                    'user_id': st.session_state['saved_user_id'],
-                    'role': st.session_state['saved_role']
-                }
-                st.info(f"Dados encontrados para usuário: {data['username']}")
-                return data
-            else:
-                st.warning("Dados salvos expirados")
+        data = carregar_sessao_usuario()
+        if data:
+            # st.info(f"Dados encontrados para usuário: {data['username']}")
+            return data
         else:
-            st.info("Nenhum dado salvo encontrado")
+            # st.info("Nenhum dado salvo encontrado")
+            pass
     except Exception as e:
         st.error(f"Erro ao carregar dados salvos: {str(e)}")
     return None
@@ -107,7 +103,7 @@ if 'user_id' not in st.session_state:
 # Verifica se há dados salvos
 if not st.session_state['authentication_status']:
     saved_data = load_user_session()
-    if saved_data:
+    if saved_data and saved_data.get('username'):
         st.session_state['authentication_status'] = True
         st.session_state['username'] = saved_data['username']
         st.session_state['role'] = saved_data['role']
@@ -123,19 +119,12 @@ if st.session_state['authentication_status']:
         st.page_link("pages/1_home.py", label="➡️ Ir para a Página Inicial")
     with col4:
         if st.button("Logout"):
+            # Remove os dados salvos ao fazer logout
+            limpar_sessao_usuario(st.session_state.get('user_id'))
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['role'] = None
             st.session_state['user_id'] = None
-            # Remove os dados salvos ao fazer logout
-            if 'saved_username' in st.session_state:
-                del st.session_state['saved_username']
-            if 'saved_user_id' in st.session_state:
-                del st.session_state['saved_user_id']
-            if 'saved_role' in st.session_state:
-                del st.session_state['saved_role']
-            if 'session_expires' in st.session_state:
-                del st.session_state['session_expires']
             st.rerun()
 else:
     tab1, tab2 = st.tabs(["Login", "Registro"])
@@ -144,11 +133,7 @@ else:
         st.title("Login")
         # Carrega dados salvos para usar como valor padrão
         saved_data = load_user_session()
-        default_username = saved_data['username'] if saved_data else ""
-        
-        # Debug: mostra o valor que será usado como padrão
-        if default_username:
-            st.write(f"Valor padrão carregado: {default_username}")
+        default_username = saved_data.get('username', "") if saved_data else ""
         
         username = st.text_input("Usuário", value=default_username)
         password = st.text_input("Senha", type="password")

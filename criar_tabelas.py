@@ -108,6 +108,18 @@ def criar_tabelas():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        id_session SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        role TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+    )
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
