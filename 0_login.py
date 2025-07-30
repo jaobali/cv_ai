@@ -6,7 +6,7 @@ from database import (
 import time
 import json
 from datetime import datetime, timedelta
-import extra_streamlit_components as stx
+# import extra_streamlit_components as stx  # Comentado pois não está funcionando
 
 import psutil
 import os
@@ -65,51 +65,33 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Inicializa o gerenciador de cookies
-try:
-    cookie_manager = stx.CookieManager()
-except Exception as e:
-    st.error(f"Erro ao inicializar cookie manager: {str(e)}")
-    cookie_manager = None
+# Função para salvar dados do usuário em session_state (alternativa ao cookie)
+def save_user_session(user_data):
+    st.session_state['saved_username'] = user_data['username']
+    st.session_state['saved_user_id'] = user_data['id']
+    st.session_state['saved_role'] = user_data['role']
+    st.session_state['session_expires'] = (datetime.now() + timedelta(days=7)).isoformat()
+    st.success(f"Dados salvos para usuário: {user_data['username']}")
 
-# Função para salvar dados do usuário em cookie
-def save_user_cookie(user_data):
-    if cookie_manager is None:
-        st.error("Cookie manager não foi inicializado corretamente")
-        return
-    
+# Função para verificar e carregar dados salvos
+def load_user_session():
     try:
-        cookie_data = {
-            'user_id': user_data['id'],
-            'username': user_data['username'],
-            'role': user_data['role'],
-            'expires': (datetime.now() + timedelta(days=7)).isoformat()
-        }
-        cookie_manager.set('user_data', json.dumps(cookie_data), expires_at=datetime.now() + timedelta(days=7))
-        st.success(f"Cookie salvo para usuário: {user_data['username']}")
-    except Exception as e:
-        st.error(f"Erro ao salvar cookie: {str(e)}")
-
-# Função para verificar e carregar dados do cookie
-def load_user_cookie():
-    if cookie_manager is None:
-        st.error("Cookie manager não foi inicializado corretamente")
-        return None
-    
-    try:
-        cookie_data = cookie_manager.get('user_data')
-        if cookie_data:
-            data = json.loads(cookie_data)
-            expires = datetime.fromisoformat(data['expires'])
+        if 'saved_username' in st.session_state and 'session_expires' in st.session_state:
+            expires = datetime.fromisoformat(st.session_state['session_expires'])
             if datetime.now() < expires:
-                st.info(f"Cookie encontrado para usuário: {data['username']}")
+                data = {
+                    'username': st.session_state['saved_username'],
+                    'user_id': st.session_state['saved_user_id'],
+                    'role': st.session_state['saved_role']
+                }
+                st.info(f"Dados encontrados para usuário: {data['username']}")
                 return data
             else:
-                st.warning("Cookie expirado")
+                st.warning("Dados salvos expirados")
         else:
-            st.info("Nenhum cookie encontrado")
+            st.info("Nenhum dado salvo encontrado")
     except Exception as e:
-        st.error(f"Erro ao carregar cookie: {str(e)}")
+        st.error(f"Erro ao carregar dados salvos: {str(e)}")
     return None
 
 # Inicializa o estado da sessão
@@ -122,14 +104,14 @@ if 'role' not in st.session_state:
 if 'user_id' not in st.session_state:
     st.session_state['user_id'] = None
 
-# Verifica se há dados salvos no cookie
+# Verifica se há dados salvos
 if not st.session_state['authentication_status']:
-    cookie_data = load_user_cookie()
-    if cookie_data:
+    saved_data = load_user_session()
+    if saved_data:
         st.session_state['authentication_status'] = True
-        st.session_state['username'] = cookie_data['username']
-        st.session_state['role'] = cookie_data['role']
-        st.session_state['user_id'] = cookie_data['user_id']
+        st.session_state['username'] = saved_data['username']
+        st.session_state['role'] = saved_data['role']
+        st.session_state['user_id'] = saved_data['user_id']
 
 if st.session_state['authentication_status']:
     st.title(f"Bem-vindo, {st.session_state['username']}!")
@@ -145,18 +127,24 @@ if st.session_state['authentication_status']:
             st.session_state['username'] = None
             st.session_state['role'] = None
             st.session_state['user_id'] = None
-            # Remove o cookie ao fazer logout
-            if cookie_manager is not None:
-                cookie_manager.delete('user_data')
+            # Remove os dados salvos ao fazer logout
+            if 'saved_username' in st.session_state:
+                del st.session_state['saved_username']
+            if 'saved_user_id' in st.session_state:
+                del st.session_state['saved_user_id']
+            if 'saved_role' in st.session_state:
+                del st.session_state['saved_role']
+            if 'session_expires' in st.session_state:
+                del st.session_state['session_expires']
             st.rerun()
 else:
     tab1, tab2 = st.tabs(["Login", "Registro"])
 
     with tab1:
         st.title("Login")
-        # Carrega dados do cookie para usar como valor padrão
-        cookie_data = load_user_cookie()
-        default_username = cookie_data['username'] if cookie_data else ""
+        # Carrega dados salvos para usar como valor padrão
+        saved_data = load_user_session()
+        default_username = saved_data['username'] if saved_data else ""
         
         # Debug: mostra o valor que será usado como padrão
         if default_username:
@@ -177,9 +165,9 @@ else:
                     st.session_state['role'] = user['role']
                     st.session_state['user_id'] = user['id']
                     
-                    # Se "Lembrar-me" estiver marcado, salva os dados no cookie
+                    # Se "Lembrar-me" estiver marcado, salva os dados
                     if remember_me:
-                        save_user_cookie(user)
+                        save_user_session(user)
                     st.rerun()
                 else:
                     st.error("Usuário ou senha incorretos")
