@@ -86,6 +86,7 @@ def save_user_cookie(user_data):
             'expires': (datetime.now() + timedelta(days=7)).isoformat()
         }
         cookie_manager.set('user_data', json.dumps(cookie_data), expires_at=datetime.now() + timedelta(days=7))
+        st.success(f"Cookie salvo para usuário: {user_data['username']}")
     except Exception as e:
         st.error(f"Erro ao salvar cookie: {str(e)}")
 
@@ -101,7 +102,12 @@ def load_user_cookie():
             data = json.loads(cookie_data)
             expires = datetime.fromisoformat(data['expires'])
             if datetime.now() < expires:
+                st.info(f"Cookie encontrado para usuário: {data['username']}")
                 return data
+            else:
+                st.warning("Cookie expirado")
+        else:
+            st.info("Nenhum cookie encontrado")
     except Exception as e:
         st.error(f"Erro ao carregar cookie: {str(e)}")
     return None
@@ -151,6 +157,10 @@ else:
         # Carrega dados do cookie para usar como valor padrão
         cookie_data = load_user_cookie()
         default_username = cookie_data['username'] if cookie_data else ""
+        
+        # Debug: mostra o valor que será usado como padrão
+        if default_username:
+            st.write(f"Valor padrão carregado: {default_username}")
         
         username = st.text_input("Usuário", value=default_username)
         password = st.text_input("Senha", type="password")
