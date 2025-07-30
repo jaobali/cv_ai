@@ -20,12 +20,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-def get_memory_usage():
-    """Retorna o uso atual de memória RAM do processo do app em MB"""
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
-    return mem_usage_mb
+# def get_memory_usage():
+#     """Retorna o uso atual de memória RAM do processo do app em MB"""
+#     process = psutil.Process(os.getpid())
+#     mem_info = process.memory_info()
+#     mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
+#     return mem_usage_mb
 
 # Mostra o uso de RAM na tela
 # ram = get_memory_usage()
@@ -66,20 +66,35 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Inicializa o gerenciador de cookies
-cookie_manager = stx.CookieManager()
+try:
+    cookie_manager = stx.CookieManager()
+except Exception as e:
+    st.error(f"Erro ao inicializar cookie manager: {str(e)}")
+    cookie_manager = None
 
 # Função para salvar dados do usuário em cookie
 def save_user_cookie(user_data):
-    cookie_data = {
-        'user_id': user_data['id'],
-        'username': user_data['username'],
-        'role': user_data['role'],
-        'expires': (datetime.now() + timedelta(days=7)).isoformat()
-    }
-    cookie_manager.set('user_data', json.dumps(cookie_data), expires_at=datetime.now() + timedelta(days=7))
+    if cookie_manager is None:
+        st.error("Cookie manager não foi inicializado corretamente")
+        return
+    
+    try:
+        cookie_data = {
+            'user_id': user_data['id'],
+            'username': user_data['username'],
+            'role': user_data['role'],
+            'expires': (datetime.now() + timedelta(days=7)).isoformat()
+        }
+        cookie_manager.set('user_data', json.dumps(cookie_data), expires_at=datetime.now() + timedelta(days=7))
+    except Exception as e:
+        st.error(f"Erro ao salvar cookie: {str(e)}")
 
 # Função para verificar e carregar dados do cookie
 def load_user_cookie():
+    if cookie_manager is None:
+        st.error("Cookie manager não foi inicializado corretamente")
+        return None
+    
     try:
         cookie_data = cookie_manager.get('user_data')
         if cookie_data:
@@ -87,8 +102,8 @@ def load_user_cookie():
             expires = datetime.fromisoformat(data['expires'])
             if datetime.now() < expires:
                 return data
-    except:
-        pass
+    except Exception as e:
+        st.error(f"Erro ao carregar cookie: {str(e)}")
     return None
 
 # Inicializa o estado da sessão
@@ -125,14 +140,19 @@ if st.session_state['authentication_status']:
             st.session_state['role'] = None
             st.session_state['user_id'] = None
             # Remove o cookie ao fazer logout
-            cookie_manager.delete('user_data')
+            if cookie_manager is not None:
+                cookie_manager.delete('user_data')
             st.rerun()
 else:
     tab1, tab2 = st.tabs(["Login", "Registro"])
 
     with tab1:
         st.title("Login")
-        username = st.text_input("Usuário")
+        # Carrega dados do cookie para usar como valor padrão
+        cookie_data = load_user_cookie()
+        default_username = cookie_data['username'] if cookie_data else ""
+        
+        username = st.text_input("Usuário", value=default_username)
         password = st.text_input("Senha", type="password")
         remember_me = st.checkbox("Lembrar-me por 7 dias")
         
