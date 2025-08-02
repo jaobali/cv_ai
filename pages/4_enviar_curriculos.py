@@ -22,15 +22,12 @@ import time
 import os
 import shutil
 
-from pathlib import Path
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions, EasyOcrOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
-import psutil
-# import os
-
 from langchain_community.callbacks.manager import get_openai_callback
+from analises_llm import iniciar_modelo
 
 # "C:\Users\Joao\Documents\GitHub\cv_ai\docling_models\ds4sd--docling-models\model_artifacts\layout\model.safetensors"
 
@@ -73,17 +70,6 @@ st.set_page_config(
     page_icon="📤",
     layout="centered"
 )
-
-def get_memory_usage():
-    """Retorna o uso atual de memória RAM do processo do app em MB"""
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
-    return mem_usage_mb
-
-# Mostra o uso de RAM na tela
-# ram = get_memory_usage()
-# st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 # INJEÇÃO DE CSS PARA REMOVER OS BOTÕES PADRÃO
 st.markdown("""
@@ -149,7 +135,7 @@ else:
 
         if arquivos and vaga_selecionada:
             if st.button("Enviar Currículos", type="primary"):
-                st.warning("⚠️ Não saia desta página enquanto o processamento estiver em andamento!")
+                warning_message = st.warning("⚠️ Não saia desta página enquanto o processamento estiver em andamento!")
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 sucessos = 0
@@ -285,8 +271,6 @@ else:
 
                 for batch_idx, batch in enumerate(batches):
                     batch_ids, batch_markdowns = zip(*batch)
-                    from langchain_community.callbacks.manager import get_openai_callback
-                    from analises_llm import iniciar_modelo
                     with get_openai_callback() as cb:
                         start_time = time.time()
                         modelo = iniciar_modelo()
@@ -361,4 +345,6 @@ else:
                 progress_bar.progress(1.0)
                 status_text.text("✅ Processamento concluído!")
                 progress_bar.empty()
+                status_text.empty()
+                warning_message.empty()
                 st.session_state['processando_curriculos'] = False

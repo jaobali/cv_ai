@@ -5,6 +5,7 @@ import psycopg2
 from dotenv import load_dotenv
 import os
 import streamlit as st
+from datetime import datetime, timedelta
 
 
 def get_connection():
@@ -742,9 +743,8 @@ def atualizar_curriculos_simultaneos_score(id_curriculo, valor):
     conn.close()
 
 # Funções para gerenciar sessões de usuário
-def salvar_sessao_usuario(user_data, dias_expiracao=7):
-    """Salva uma sessão de usuário no banco de dados"""
-    from datetime import datetime, timedelta
+def salvar_sessao_usuario(user_data, user_ip, dias_expiracao=7):
+    """Salva uma sessão de usuário no banco de dados com identificação por IP"""
     
     conn = get_connection()
     cursor = conn.cursor()
@@ -753,15 +753,15 @@ def salvar_sessao_usuario(user_data, dias_expiracao=7):
         # Remove sessões expiradas
         cursor.execute("DELETE FROM user_sessions WHERE expires_at < NOW()")
         
-        # Remove sessões existentes do mesmo usuário
-        cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_data['id'],))
+        # Remove sessões existentes do mesmo usuário no mesmo IP
+        cursor.execute("DELETE FROM user_sessions WHERE user_id = %s AND user_ip = %s", (user_data['id'], user_ip))
         
-        # Insere nova sessão
+        # Insere nova sessão com IP
         expires_at = datetime.now() + timedelta(days=dias_expiracao)
         cursor.execute("""
-        INSERT INTO user_sessions (user_id, username, role, expires_at)
-        VALUES (%s, %s, %s, %s)
-        """, (user_data['id'], user_data['username'], user_data['role'], expires_at))
+        INSERT INTO user_sessions (user_id, username, role, user_ip, expires_at)
+        VALUES (%s, %s, %s, %s, %s)
+        """, (user_data['id'], user_data['username'], user_data['role'], user_ip, expires_at))
         
         conn.commit()
     except Exception as e:
@@ -772,8 +772,8 @@ def salvar_sessao_usuario(user_data, dias_expiracao=7):
         cursor.close()
         conn.close()
 
-def carregar_sessao_usuario():
-    """Carrega a sessão de usuário do banco de dados"""
+def carregar_sessao_usuario(user_ip):
+    """Carrega a sessão de usuário do banco de dados baseado no IP"""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -781,14 +781,14 @@ def carregar_sessao_usuario():
         # Remove sessões expiradas
         cursor.execute("DELETE FROM user_sessions WHERE expires_at < NOW()")
         
-        # Busca sessão válida
+        # Busca sessão válida para o IP específico
         cursor.execute("""
         SELECT user_id, username, role, expires_at
         FROM user_sessions
-        WHERE expires_at > NOW()
+        WHERE expires_at > NOW() AND user_ip = %s
         ORDER BY created_at DESC
         LIMIT 1
-        """)
+        """, (user_ip,))
         
         result = cursor.fetchone()
         
@@ -807,14 +807,18 @@ def carregar_sessao_usuario():
         cursor.close()
         conn.close()
 
-def limpar_sessao_usuario(user_id=None):
+def limpar_sessao_usuario(user_id=None, user_ip=None):
     """Remove sessões de usuário do banco de dados"""
     conn = get_connection()
     cursor = conn.cursor()
     
     try:
-        if user_id:
+        if user_id and user_ip:
+            cursor.execute("DELETE FROM user_sessions WHERE user_id = %s AND user_ip = %s", (user_id, user_ip))
+        elif user_id:
             cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_id,))
+        elif user_ip:
+            cursor.execute("DELETE FROM user_sessions WHERE user_ip = %s", (user_ip,))
         else:
             cursor.execute("DELETE FROM user_sessions WHERE expires_at < NOW()")
         

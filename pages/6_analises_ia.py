@@ -18,9 +18,9 @@ import os
 import analises_llm
 import altair as alt
 import pandas as pd
-
-import psutil
-# import os
+import time
+from langchain_community.callbacks.manager import get_openai_callback
+from analises_llm import iniciar_modelo
 
 # Configura caminhos para imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -31,18 +31,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# def get_memory_usage():
-#     """Retorna o uso atual de memória RAM do processo do app em MB"""
-#     process = psutil.Process(os.getpid())
-#     mem_info = process.memory_info()
-#     mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
-#     return mem_usage_mb
-
-# # Mostra o uso de RAM na tela
-# ram = get_memory_usage()
-# st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
-
 
 st.markdown("""
 <style>
@@ -102,7 +90,7 @@ with col3:
 
 # Processamento principal
 if botao_processar:
-    st.warning("⚠️ Não saia desta página enquanto o processamento estiver em andamento!")
+    warning_message = st.warning("⚠️ Não saia desta página enquanto o processamento estiver em andamento!")
     progress_bar = st.progress(0)
     status_text = st.empty()
     # Define as etapas do processo e seus pesos
@@ -140,9 +128,6 @@ if botao_processar:
                         Requisitos: {c['requisitos']}\n
                         Diferenciais: {c['diferenciais']}\n
                         """ for c in batch]
-                    import time
-                    from langchain_community.callbacks.manager import get_openai_callback
-                    from analises_llm import iniciar_modelo
                     modelo = iniciar_modelo()
                     with get_openai_callback() as cb:
                         start_time = time.time()
@@ -206,9 +191,6 @@ if botao_processar:
                         Requisitos: {c['requisitos']}\n
                         Diferenciais: {c['diferenciais']}\n
                         """ for c in batch]
-                    import time
-                    from langchain_community.callbacks.manager import get_openai_callback
-                    from analises_llm import iniciar_modelo
                     modelo = iniciar_modelo()
                     with get_openai_callback() as cb:
                         start_time = time.time()
@@ -252,6 +234,7 @@ if botao_processar:
     finally:
         progress_bar.empty()
         status_text.empty()
+        warning_message.empty()
 
 # Seção para visualização de resultados
 st.markdown("---")

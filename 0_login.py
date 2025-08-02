@@ -8,12 +8,53 @@ from database import (
 )
 import time
 import json
-from datetime import datetime, timedelta
 # import extra_streamlit_components as stx  # Comentado pois não está funcionando
 
-import psutil
 import os
+import socket
 
+# Função para obter IP do usuário
+def get_user_ip():
+    """Obtém um identificador único para o dispositivo do usuário"""
+    try:
+        # Tenta obter IP real do usuário via Streamlit
+        if hasattr(st, 'experimental_get_query_params'):
+            params = st.query_params()
+            if params.get("_stcore"):
+                return f"streamlit_{params['_stcore'][0]}"
+        
+        # Para desenvolvimento local, usa hostname + timestamp
+        hostname = socket.gethostname()
+        timestamp = int(time.time() / 3600)  # Muda a cada hora
+        return f"local_{hostname}_{timestamp}"
+        
+    except Exception as e:
+        # Fallback para caso não consiga obter identificador
+        return f"fallback_{int(time.time() / 3600)}"
+
+# Função para salvar dados do usuário no banco de dados
+def save_user_session(user_data):
+    try:
+        user_ip = get_user_ip()
+        salvar_sessao_usuario(user_data, user_ip)
+        # st.success(f"Dados salvos para usuário: {user_data['username']}")
+    except Exception as e:
+        st.error(f"Erro ao salvar dados: {str(e)}")
+
+# Função para verificar e carregar dados salvos
+def load_user_session():
+    try:
+        user_ip = get_user_ip()
+        data = carregar_sessao_usuario(user_ip)
+        if data:
+            # st.info(f"Dados encontrados para usuário: {data['username']}")
+            return data
+        else:
+            # st.info("Nenhum dado salvo encontrado")
+            pass
+    except Exception as e:
+        st.error(f"Erro ao carregar dados salvos: {str(e)}")
+    return None
 
 # Configuração da página
 st.set_page_config(
@@ -68,28 +109,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Função para salvar dados do usuário no banco de dados
-def save_user_session(user_data):
-    try:
-        salvar_sessao_usuario(user_data)
-        # st.success(f"Dados salvos para usuário: {user_data['username']}")
-    except Exception as e:
-        st.error(f"Erro ao salvar dados: {str(e)}")
-
-# Função para verificar e carregar dados salvos
-def load_user_session():
-    try:
-        data = carregar_sessao_usuario()
-        if data:
-            # st.info(f"Dados encontrados para usuário: {data['username']}")
-            return data
-        else:
-            # st.info("Nenhum dado salvo encontrado")
-            pass
-    except Exception as e:
-        st.error(f"Erro ao carregar dados salvos: {str(e)}")
-    return None
-
 # Inicializa o estado da sessão
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
@@ -120,7 +139,8 @@ if st.session_state['authentication_status']:
     with col4:
         if st.button("Logout"):
             # Remove os dados salvos ao fazer logout
-            limpar_sessao_usuario(st.session_state.get('user_id'))
+            user_ip = get_user_ip()
+            limpar_sessao_usuario(st.session_state.get('user_id'), user_ip)
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['role'] = None

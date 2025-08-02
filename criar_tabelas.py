@@ -114,6 +114,7 @@ def criar_tabelas():
         user_id INTEGER NOT NULL,
         username TEXT NOT NULL,
         role TEXT NOT NULL,
+        user_ip TEXT NOT NULL,
         expires_at TIMESTAMP NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
