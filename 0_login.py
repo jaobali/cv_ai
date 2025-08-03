@@ -17,20 +17,56 @@ import socket
 def get_user_ip():
     """Obtém um identificador único para o dispositivo do usuário"""
     try:
-        # Tenta obter IP real do usuário via Streamlit
-        if hasattr(st, 'experimental_get_query_params'):
+        # Estratégia 1: Tenta obter IP via Streamlit Cloud
+        if hasattr(st, 'query_params'):
             params = st.query_params()
             if params.get("_stcore"):
                 return f"streamlit_{params['_stcore'][0]}"
         
-        # Para desenvolvimento local, usa hostname + timestamp
+        # Estratégia 2: Tenta obter via user agent
+        if hasattr(st, 'get_user_agent'):
+            user_agent = st.get_user_agent()
+            if user_agent:
+                return f"browser_{hash(user_agent) % 10000}"
+        
+        # Estratégia 3: Para desenvolvimento local, usa hostname + timestamp
+        import socket
+        import time
         hostname = socket.gethostname()
-        timestamp = int(time.time() / 3600)  # Muda a cada hora
+        timestamp = int(time.time() / 60)  # Muda a cada minuto
         return f"local_{hostname}_{timestamp}"
         
     except Exception as e:
-        # Fallback para caso não consiga obter identificador
-        return f"fallback_{int(time.time() / 3600)}"
+        # Estratégia 4: Fallback com timestamp mais específico
+        import time
+        timestamp = int(time.time() / 60)  # Muda a cada minuto
+        return f"fallback_{timestamp}"
+
+# Função para debug - mostra qual estratégia está sendo usada
+def debug_user_ip():
+    """Função para debug - mostra como o IP está sendo gerado"""
+    try:
+        # Testa cada estratégia
+        if hasattr(st, 'query_params'):
+            params = st.query_params()
+            if params.get("_stcore"):
+                return f"streamlit_{params['_stcore'][0]}", "Streamlit Cloud"
+        
+        if hasattr(st, 'get_user_agent'):
+            user_agent = st.get_user_agent()
+            if user_agent:
+                return f"browser_{hash(user_agent) % 10000}", "User Agent"
+        
+        import socket
+        import time
+        hostname = socket.gethostname()
+        timestamp = int(time.time() / 60)
+        return f"local_{hostname}_{timestamp}", "Local Hostname"
+        
+    except Exception as e:
+        import time
+        timestamp = int(time.time() / 60)
+        return f"fallback_{timestamp}", "Fallback"
 
 # Função para salvar dados do usuário no banco de dados
 def save_user_session(user_data):
@@ -131,6 +167,14 @@ if not st.session_state['authentication_status']:
 if st.session_state['authentication_status']:
     st.title(f"Bem-vindo, {st.session_state['username']}!")
     st.write(f"Nivel de acesso: {st.session_state['role']}")
+    
+    # Debug: Mostra qual estratégia de IP está sendo usada
+    if st.checkbox("🔍 Mostrar informações de debug"):
+        user_ip, strategy = debug_user_ip()
+        st.info(f"**IP do dispositivo:** `{user_ip}`")
+        st.info(f"**Estratégia usada:** {strategy}")
+        st.info(f"**Dispositivo atual:** {socket.gethostname()}")
+    
     st.write('---')
 
     col1, col2, col3, col4 = st.columns(4)
