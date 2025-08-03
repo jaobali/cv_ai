@@ -379,7 +379,7 @@ def criar_usuario(username, password, email, empresa, role='user'):
         conn.close()
 
 def alterar_senha_usuario(email, new_password):
-    """Altera a senha do usuário no banco de dados"""
+    """Altera a senha do usuário no banco de dados""" 
     conn = get_connection()
     cursor = conn.cursor()
 
