@@ -356,7 +356,7 @@ def atualizar_score_curriculo(id_curriculo, score):
     cursor.close()
     conn.close()
 
-def criar_usuario(username, password, email, role='user'):
+def criar_usuario(username, password, email, empresa, role='user'):
     """Cria um novo usuário no banco de dados"""
     conn = get_connection()
     cursor = conn.cursor()
@@ -366,12 +366,40 @@ def criar_usuario(username, password, email, role='user'):
 
     try:
         cursor.execute("""
-        INSERT INTO usuarios (username, password_hash, salt, email, role)
-        VALUES (%s, %s, %s, %s, %s)
-        """, (username, password_hash, salt, email, role))
+        INSERT INTO usuarios (username, password_hash, salt, email, role, empresa)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """, (username, password_hash, salt, email, role, empresa))
         conn.commit()
         return True
     except psycopg2.IntegrityError:
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+def alterar_senha_usuario(email, new_password):
+    """Altera a senha do usuário no banco de dados"""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    salt = secrets.token_hex(16)
+    password_hash = hashlib.sha256((new_password + salt).encode()).hexdigest()
+
+    try:
+        cursor.execute("""
+            UPDATE usuarios
+            SET password_hash = %s,
+                salt = %s
+            WHERE email = %s
+        """, (password_hash, salt, email))
+        conn.commit()
+
+        # Verifica se algum registro foi atualizado
+        if cursor.rowcount == 0:
+            return False  # Nenhum usuário com esse email
+        return True
+    except psycopg2.Error:
         conn.rollback()
         return False
     finally:

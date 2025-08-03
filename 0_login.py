@@ -1,7 +1,7 @@
 import streamlit as st
 from database import (
     verificar_usuario,
-    criar_usuario,
+    alterar_senha_usuario,
     salvar_sessao_usuario,
     carregar_sessao_usuario,
     limpar_sessao_usuario
@@ -197,7 +197,7 @@ if st.session_state['authentication_status']:
             st.session_state['user_id'] = None
             st.rerun()
 else:
-    tab1, tab2 = st.tabs(["Login", "Registro"])
+    tab1, tab2 = st.tabs(["Login", "Alterar Senha"])
 
     with tab1:
         st.title("Login")
@@ -228,20 +228,15 @@ else:
                     st.error("Usuário ou senha incorretos")
 
     with tab2:
-        with st.form("register_form", enter_to_submit=False):
-            st.title("Registro")
-            new_username = st.text_input("Novo usuário")
-            new_email = st.text_input("Email")
+        with st.form("password_form", enter_to_submit=False):
+            st.title("Alterar Senha")
+            # Carrega dados salvos para usar como valor padrão
+
+            email = st.text_input("Email")
+            password = st.text_input("Senha", type="password")
             new_password = st.text_input("Nova senha", type="password")
-            confirm_password = st.text_input("Confirmar senha", type="password")
-            submit = st.form_submit_button("Registrar")
-            if submit:
-                if new_password != confirm_password:
-                    st.error("As senhas não coincidem")
+            if st.form_submit_button("Alterar Senha"):
+                if alterar_senha_usuario(email, new_password):
+                    st.success("Senha alterada com sucesso!")
                 else:
-                    if criar_usuario(new_username, new_password, new_email):
-                        st.success("Usuário registrado com sucesso!")
-                        time.sleep(1)
-                        st.rerun()
-                    else:
-                        st.error("Nome de usuário ou email já existente")
+                    st.error("Erro ao alterar senha")
