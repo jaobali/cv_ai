@@ -16,57 +16,82 @@ import socket
 # Função para obter IP do usuário
 def get_user_ip():
     """Obtém um identificador único para o dispositivo do usuário"""
-    try:
-        # Estratégia 1: Tenta obter IP via Streamlit Cloud
-        if hasattr(st, 'query_params'):
-            params = st.query_params()
-            if params.get("_stcore"):
+    # Estratégia 1: Tenta obter IP via Streamlit Cloud
+    if hasattr(st, 'query_params'):
+        try:
+            params = st.query_params
+            if hasattr(params, 'get') and params.get("_stcore"):
                 return f"streamlit_{params['_stcore'][0]}"
-        
-        # Estratégia 2: Tenta obter via user agent
-        if hasattr(st, 'get_user_agent'):
-            user_agent = st.get_user_agent()
-            if user_agent:
-                return f"browser_{hash(user_agent) % 10000}"
-        
-        # Estratégia 3: Para desenvolvimento local, usa hostname + timestamp
-        import socket
-        import time
+        except:
+            pass
+    
+    # Estratégia 2: Para desenvolvimento local, usa informações específicas
+    import socket
+    import time
+    import os
+    
+    # Obtém informações do sistema de forma mais robusta
+    try:
         hostname = socket.gethostname()
-        timestamp = int(time.time() / 60)  # Muda a cada minuto
-        return f"local_{hostname}_{timestamp}"
-        
+        if not hostname or hostname == "localhost":
+            hostname = "DESKTOP-LOCAL"
     except Exception as e:
-        # Estratégia 4: Fallback com timestamp mais específico
-        import time
-        timestamp = int(time.time() / 60)  # Muda a cada minuto
-        return f"fallback_{timestamp}"
+        print(f"Erro ao obter hostname: {e}")
+        hostname = "DESKTOP-LOCAL"
+    
+    try:
+        username = os.getenv('USERNAME', os.getenv('USER', 'unknown'))
+        if not username or username == "unknown":
+            username = "Usuario"
+    except Exception as e:
+        print(f"Erro ao obter username: {e}")
+        username = "Usuario"
+    
+    timestamp = int(time.time() / 300)  # Muda a cada 5 minutos
+    
+    # Cria identificador único baseado no ambiente
+    device_id = f"local_{hostname}_{username}_{timestamp}"
+    print(f"Gerado device_id: {device_id}")
+    return device_id
 
 # Função para debug - mostra qual estratégia está sendo usada
 def debug_user_ip():
     """Função para debug - mostra como o IP está sendo gerado"""
-    try:
-        # Testa cada estratégia
-        if hasattr(st, 'query_params'):
-            params = st.query_params()
-            if params.get("_stcore"):
+    # Testa cada estratégia
+    if hasattr(st, 'query_params'):
+        try:
+            params = st.query_params
+            if hasattr(params, 'get') and params.get("_stcore"):
                 return f"streamlit_{params['_stcore'][0]}", "Streamlit Cloud"
-        
-        if hasattr(st, 'get_user_agent'):
-            user_agent = st.get_user_agent()
-            if user_agent:
-                return f"browser_{hash(user_agent) % 10000}", "User Agent"
-        
-        import socket
-        import time
+        except:
+            pass
+    
+    # Para desenvolvimento local
+    import socket
+    import time
+    import os
+    
+    try:
         hostname = socket.gethostname()
-        timestamp = int(time.time() / 60)
-        return f"local_{hostname}_{timestamp}", "Local Hostname"
-        
+        if not hostname or hostname == "localhost":
+            hostname = "DESKTOP-LOCAL"
     except Exception as e:
-        import time
-        timestamp = int(time.time() / 60)
-        return f"fallback_{timestamp}", "Fallback"
+        print(f"Erro ao obter hostname no debug: {e}")
+        hostname = "DESKTOP-LOCAL"
+    
+    try:
+        username = os.getenv('USERNAME', os.getenv('USER', 'Usuario'))
+        if not username or username == "unknown":
+            username = "Usuario"
+    except Exception as e:
+        print(f"Erro ao obter username no debug: {e}")
+        username = "Usuario"
+    
+    timestamp = int(time.time() / 300)
+    
+    device_id = f"local_{hostname}_{username}_{timestamp}"
+    print(f"Debug - Gerado device_id: {device_id}")
+    return device_id, "Local Environment"
 
 # Função para salvar dados do usuário no banco de dados
 def save_user_session(user_data):
@@ -173,7 +198,25 @@ if st.session_state['authentication_status']:
         user_ip, strategy = debug_user_ip()
         st.info(f"**IP do dispositivo:** `{user_ip}`")
         st.info(f"**Estratégia usada:** {strategy}")
-        st.info(f"**Dispositivo atual:** {socket.gethostname()}")
+        
+        # Informações detalhadas do sistema
+        import socket
+        import os
+        hostname = socket.gethostname()
+        username = os.getenv('USERNAME', os.getenv('USER', 'unknown'))
+        
+        st.info(f"**Hostname:** {hostname}")
+        st.info(f"**Usuário do sistema:** {username}")
+        st.info(f"**PID do processo:** {os.getpid()}")
+        
+        # Mostra como o sistema diferencia dispositivos
+        st.write("### 📱 Como funciona a diferenciação:")
+        st.write("""
+        - **Mesmo computador, usuários diferentes** → IPs diferentes
+        - **Computadores diferentes** → IPs diferentes  
+        - **Mesmo usuário em dispositivos diferentes** → IPs diferentes
+        - **Sessões independentes** → Cada dispositivo tem sua própria sessão
+        """)
     
     st.write('---')
 
