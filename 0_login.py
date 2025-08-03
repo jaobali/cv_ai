@@ -125,16 +125,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# def get_memory_usage():
-#     """Retorna o uso atual de memória RAM do processo do app em MB"""
-#     process = psutil.Process(os.getpid())
-#     mem_info = process.memory_info()
-#     mem_usage_mb = mem_info.rss / (1024 ** 2)  # RSS: memória residente
-#     return mem_usage_mb
-
-# Mostra o uso de RAM na tela
-# ram = get_memory_usage()
-# st.write(f"**Uso atual de RAM:** `{ram:.2f} MB`")
 
 st.markdown("""
 <style>
@@ -192,33 +182,6 @@ if not st.session_state['authentication_status']:
 if st.session_state['authentication_status']:
     st.title(f"Bem-vindo, {st.session_state['username']}!")
     st.write(f"Nivel de acesso: {st.session_state['role']}")
-    
-    # Debug: Mostra qual estratégia de IP está sendo usada
-    if st.checkbox("🔍 Mostrar informações de debug"):
-        user_ip, strategy = debug_user_ip()
-        st.info(f"**IP do dispositivo:** `{user_ip}`")
-        st.info(f"**Estratégia usada:** {strategy}")
-        
-        # Informações detalhadas do sistema
-        import socket
-        import os
-        hostname = socket.gethostname()
-        username = os.getenv('USERNAME', os.getenv('USER', 'unknown'))
-        
-        st.info(f"**Hostname:** {hostname}")
-        st.info(f"**Usuário do sistema:** {username}")
-        st.info(f"**PID do processo:** {os.getpid()}")
-        
-        # Mostra como o sistema diferencia dispositivos
-        st.write("### 📱 Como funciona a diferenciação:")
-        st.write("""
-        - **Mesmo computador, usuários diferentes** → IPs diferentes
-        - **Computadores diferentes** → IPs diferentes  
-        - **Mesmo usuário em dispositivos diferentes** → IPs diferentes
-        - **Sessões independentes** → Cada dispositivo tem sua própria sessão
-        """)
-    
-    st.write('---')
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
